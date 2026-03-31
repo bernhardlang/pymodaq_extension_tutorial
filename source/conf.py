@@ -28,5 +28,6 @@ html_theme = 'alabaster'
 html_static_path = ['_static']
 
 html_theme_options = {
-    "body_min_width": "70%"
+    'body_min_width': '70%',
+    'page_width': 'auto'
 }
