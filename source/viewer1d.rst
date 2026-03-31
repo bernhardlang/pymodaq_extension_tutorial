@@ -106,4 +106,54 @@ initialisation of the controller has to respect a speciality of PyMoDAQ. Any plu
 
         return "MockSpectro initialised", True
 
+    def close(self):
+        """Terminate the communication protocol"""
+
+        initialized = False
+
 For sake of simplicity we assume here that the controller has a wavelength property. In most cases we'll be programming the controller ourselves and can thereby make sure that such property is indeed present. Should the controller be provided by the device's supplier, one may either add the property by modifying the code or use here whatever means the controller provides to obtain the spectrometer's wavelength or energy axis, e.g. a controller which exports its wavelength axis together with the recorded data.
+
+Obtaining the simulated spectroscopic data is a matter of calling the corresponding method on the controller.
+That data is wrapped in :code:`DataFromPlugins` and :code:`DataToExport` so that the viewer object can determine what to do with and how to display it.
+
+.. code-block::
+
+       def grab_data(self, Naverage=1, **kwargs):
+	    """Start grabbing from the detector
+	    Use a synchrone acquisition (blocking function)
+
+	    Parameters
+	    ----------
+	    Naverage: int
+		Number of hardware averaging.
+	    """
+
+	    spectrum, time_stamp = self.controller.grab_spectrum()
+
+	    dfp_spectrum = \
+		DataFromPlugins(name='MockSpectro', data=[spectrum], dim='Data1D',
+				labels=['spectrum'], axes=[self.x_axis])
+	    dfp_time_stamp = \
+		DataFromPlugins(name='TimeStamp', data=[np.array([time_stamp])],
+				dim='Data0D', labels=['time stamp'])
+
+	    self.dte_signal.emit(DataToExport(name='spectrum',
+					      data=[dfp_spectrum, dfp_time_stamp]))
+
+	def stop(self):
+	    pass
+
+    if __name__ == '__main__':
+	main(__file__)
+
+This code can be tested by directly running the plugin script as
+
+.. code-block::
+
+    $ python daq_1Dviewer_MockSpectro.py
+
+A bare plugin window should open
+
+.. image:: plugin-test.png
+
+and should display simulated data when pressing the grab button (the fourth to the right of the combobox in the second tool bar). 

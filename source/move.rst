@@ -1,2 +1,2 @@
-Mode Plugin
+Move Plugin
 ===========
