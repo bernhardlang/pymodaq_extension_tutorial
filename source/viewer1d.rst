@@ -13,7 +13,8 @@ Inside the plugin file, a single class MockSpectro implements the interface to P
     from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, \
 	comon_parameters, main
     from pymodaq.utils.parameter import Parameter
-    from pymodaq_plugins_absorption.hardware.controller import MockSpectrograph
+    from pymodaq_plugins_tutorial_extension.hardware.controller import \
+        MockSpectrograph
 
 
     class DAQ_1DViewer_MockSpectro(DAQ_Viewer_base):
@@ -26,6 +27,7 @@ Inside the plugin file, a single class MockSpectro implements the interface to P
 The parameters defined in the controller have to be repeated here to export them to PyMoDAQ together with the necessary information.
 
 .. code-block::
+
     params = comon_parameters+[
         {'title': 'Integration time [sec]', 'name': 'integration_time',
          'type': 'float', 'min': 0.001, 'value': 1,
