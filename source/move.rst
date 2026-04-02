@@ -39,7 +39,7 @@ Move Plugin
 	absorption: float = 0.3
 	shutter_names = ['dark', 'excitation']
 
-       def __post_init__(self):
+        def __post_init__(self):
 	    self.calculate_base_data()
 	    self.with_sample = True
 	    self.shutter = { name: MockShutter(1200)
@@ -47,6 +47,10 @@ Move Plugin
 
 
 .. code-block::
+
+    class MockSpectrograph:
+
+    ...
 
 	def grab_spectrum(self):
 	    time.sleep(max(self.integration_time * 1e-6, 0.001))
@@ -68,16 +72,8 @@ Move Plugin
 .. code-block::
 
     class DAQ_Move_MockShutter(DAQ_Move_base):
-	""" Instrument plugin class for an actuator.
 
-	Attributes:
-	-----------
-	controller: object
-	    The particular object that allow the communication with the hardware,
-	    in general a python wrapper around the hardware library.
-
-	"""
-	is_multiaxes = True
+        is_multiaxes = True
 	_axis_names = MockSpectrograph.shutter_names[:2]
 	_controller_units = '' #: Union[str, List[str]] = ['mm', 'mm']
 	_epsilon = 0.1
@@ -91,21 +87,11 @@ Move Plugin
 
 .. code-block::
 
-	def ini_stage(self, controller=None):
-	    """Actuator communication initialization
+    class DAQ_Move_MockShutter(DAQ_Move_base):
 
-	    Parameters
-	    ----------
-	    controller: (object)
-		custom object of a PyMoDAQ plugin (Slave case). None if only one
-		actuator by controller (Master case)
+        ...
 
-	    Returns
-	    -------
-	    info: str
-	    initialized: bool
-		False if initialization failed otherwise True
-	    """
+        def ini_stage(self, controller=None):
 	    if self.is_master:
 		self.controller = MockSpectrograph()
 	    else:
@@ -115,30 +101,18 @@ Move Plugin
 	    return info, True
 
 	def close(self):
-	    """Terminate the communication protocol"""
 	    pass
 
 	def commit_settings(self, param: Parameter):
-	    """Apply the consequences of a change of value in the detector
-	       settings
-
-	    Parameters
-	    ----------
-	    param: Parameter
-		A given parameter (within detector_settings) whose value has been
-		changed by the user
-	    """
 	    pass
 
 .. code-block::
 
-	def get_actuator_value(self):
-	    """Get the current value from the hardware with scaling conversion.
+    class DAQ_Move_MockShutter(DAQ_Move_base):
 
-	    Returns
-	    -------
-	    float: The position obtained after scaling conversion.
-	    """
+        ...
+
+	def get_actuator_value(self):
 	    axis = self.settings['multiaxes', 'axis']
 	    pos = DataActuator(data=self.controller.get_shutter_value(axis),
 			       units=self.axis_unit)
@@ -146,12 +120,6 @@ Move Plugin
 	    return pos
 
 	def move_abs(self, value: DataActuator):
-	    """ Move the actuator to the absolute target defined by value
-
-	    Parameters
-	    ----------
-	    value: (float) value of the absolute target positioning
-	    """
 	    value = self.check_bound(value)
 	    self.target_value = value
 	    value = self.set_position_with_scaling(value)
@@ -161,30 +129,14 @@ Move Plugin
 					   ['Moved shutter %s' % axis]))
 
 	def move_rel(self, value: DataActuator):
-	    """ Move the actuator to the relative target actuator value defined
-		by value
-
-	    Parameters
-	    ----------
-	    value: (float) value of the relative target positioning
-	    """
 	    axis = self.settings['multiaxes', 'axis']
-	    current_position = self.get_actuator_value(axis)
-	    value = self.check_bound(current_position + value) - current_position
-	    self.target_value = value + current_position
-	    value = self.set_position_relative_with_scaling(value)
-
-	    self.controller.delay_line.move_at(axis, value.value(self.axis_unit))
-	    self.emit_status(ThreadCommand('Update_Status',
-					   ['Moved shutter %s' % axis]))
+            self.move_abs(self.get_actuator_value(axis) + value)
 
 	def move_home(self):
-	    """Call the reference method of the controller"""
 	    self.emit_status(ThreadCommand('Update_Status',
 					   ['Move Home not implemented']))
 
 	def stop_motion(self):
-	    """Stop the actuator and emits move_done signal"""
 	    self.move_done()
 
 
