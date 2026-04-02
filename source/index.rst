@@ -9,10 +9,12 @@ The code shown in this tutorial has been developped and tested under Linux. The 
    :maxdepth: 1
    :caption: Contents:
 
+   intro.rst
    preparation.rst
    hardware.rst
    viewer1d.rst
    move.rst
+   dashboard.rst
    extension.rst
 
 
