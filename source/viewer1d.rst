@@ -1,9 +1,9 @@
 View Plugin
 ===========
 
-next, we have to implement a viewer plugin as an interface between PyMoDAQ and our spectrometer. To this end, the template file :file:`daq_1Dviewer_Template.py` in :file:`src/pymodaq_tutorial_extension/daq_viewer_plugins/plugins_1D` has to be renamed according to PyMoDAQ's naming convention for plugins. We'll call the device MockSpectro. The file has therefore be renamed to :file:`daq_1Dviewer_MockSpectro.py`.
+The next step on the journey is to implement a viewer plugin as an interface between PyMoDAQ and our spectrometer. To this end, the template file :file:`daq_1Dviewer_Template.py` in :file:`src/pymodaq_plugins_tutorial_extension/daq_viewer_plugins/plugins_1D` has to be renamed according to PyMoDAQ's naming convention for plugins. We'll call the device MockSpectro. The file has therefore be renamed to :file:`daq_1Dviewer_MockSpectro.py`.
 The template file contains extensive information as comments which are to be replaced by the correspèonding real code.
-Inside the plugin file, a single class MockSpectro implements the interface to PyMoDAQ. Watch out for the naming convention. File name and class name have to match.
+Inside the plugin file, a single class MockSpectro implements the interface to PyMoDAQ. Watch out for the naming convention and lowe case vs upper case. File name and class name have to match in a specific manner.
 
 
 .. code-block::
@@ -74,9 +74,9 @@ We'll just tell any editing program of which type the controller should be and p
         if param.name() in self.parameter_names:
             setattr(self.controller, param.name(), param.value())
 
-Changed parameter values can be direxctly handed over to the controller. There's no need for any manipulation on our simulated device.
+Changed parameter values can be directly handed over to the controller. There's no need for any manipulation on our simulated device.
 
-initialisation of the controller has to respect a speciality of PyMoDAQ. Any plugin can be either a master which has a controller instance or a slave which shares the controller with another plugin with master role.
+Initialisation of the controller has to respect a speciality of PyMoDAQ. Any plugin can be either a master which has a controller instance or a slave which shares the controller with another plugin with master role.
 
 .. code-block::
 

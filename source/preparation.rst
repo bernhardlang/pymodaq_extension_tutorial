@@ -12,10 +12,11 @@ A couple of tools will be used in this tutorial. To avoid cluttering-up the text
 * Conda / venv
 * No special editor or IDE is needed. PyCharm is a good choice since PyMoDAQ developers use it a lot.
 * pde (the built-in Python Debugger) or the debugger built into PyCharm
+* git-shell / a UN*X bash shell is used for handling operations on the level of the computer's file system.
 
 
-Setting up the plugin skeleton
-------------------------------
+Setting up the Python module skeleton
+-------------------------------------
 
 In this section we prepare the module structure which is needed for PyMoDAQ to recognise the instrument plugins and the extension. We start by cloning the plugin template repository on github. Note that the route taken here does not build a fork of an existing repository. We're going to develop something new, right?::
 
@@ -28,11 +29,11 @@ Then clone the template repository::
 
 We'll call the extension 'Absorption' and give the repository the corresponding name::
 
-  $ mv pymodaq_plugins_template pymodaq_plugins_absorption
+  $ mv pymodaq_plugins_template pymodaq_plugins_tutorial_extension
   $ cd pymodaq_plugins_absorption
-  $ mv src/pymodaq_plugins_template src/pymodaq_plugins_absorption
+  $ mv src/pymodaq_plugins_template src/pymodaq_plugins_tutorial_extension
 
-Furthermore, we're not going to need the templates for 0D and 2D viewer plugins, neither for custom applications and models. Let's delete the corresponding template files because they would show up in the dashboard's plugin list. However, don't delete the folders and the __init__.py files in there because at some later point you may want to add real plugins there. The now deleted template code can easily be retrieved from github in case.
+Furthermore, we're not going to need the templates for 0D and 2D viewer plugins, neither for custom applications and models. Let's delete the corresponding template files because they would show up in the dashboard's plugin list. However, don't delete the folders and the __init__.py files in there because at some later point we may want to add real plugins there. The now deleted template code can easily be retrieved from github in case.
 
 Being a git clone of a template repository, it still is linked to the history of that template module which is probably not what we want. Its is better to make a fresh start by deleting git's repository folder and re-initialising git::
 
@@ -41,9 +42,9 @@ Being a git clone of a template repository, it still is linked to the history of
   $ git add -A
   $ git commit -m "initial repository commit"
 
-If you plan to develop multiple plugins, you may also tar or zip the project folder right after having deleted the .git folder and keep the material for re-use later on.
+If you plan to develop multiple plugins, you may also tar or zip the project folder right after having deleted the .git folder and keep the material aside for re-use later on.
 
-My preferred code editor (being a keyboard player) makes backup copies of files being changed by appending a tilde to the file name. I therefore add the line::
+My preferred code editor (being a keyboard player) makes backup copies of changed files by appending a tilde to the file name. I therefore add the line::
 
   *~
 
@@ -60,20 +61,21 @@ A couple of files in there should be modified.
 * pyproject.toml: Here goes main information for the installation procedure. The code is pretty self-explaining. Just fill in the blanks. The package-url depends on whether you want to host your package on your own repository or you plan to get it hosted on the PyMoDAQ repository. Don't worry too much about it at this time. It is a good idea to delete the comments telling what to do once you did it. We'll leave the features as they are for the moment, announcing only instruments, because that is what we are going to do as a first step. The extension comes later.
 * README.rst: This file is intended to give the user of your plugin the necessary information to install and to run it. Have a look into other plugin repositories to get an idea of what is typically provided here and how.
 
-That's it already for the root folder and the book-keeping matter in there. We can go on working on python sources now.
+That's it already for the root folder and the book-keeping matter in there.
+
 
 Preparing the environment
 .........................
 
-As a last step before diving into coding we have to set up a virtual environment which we are going to use during the development of our plugin. Due to the fast evolution of Python packages, keeping track of compatible versions is a quite important issue. Virtual environments are used as containers which isolate parallel installations using different and potentially incompatible versions of packages. In the past, conda was used by the PyMoDAQ community. Licence issues have changed that. Until things have settled, the Python-onboard package venv can be used::
+As a last step before diving into coding we have to set up a virtual environment which we are going to use during the development of our plugin. Due to the fast evolution of Python packages, keeping track of compatible versions is quite an important issue. Virtual environments are used as containers which isolate parallel installations using different and potentially incompatible versions of packages. In the past, conda was used by the PyMoDAQ community. Licence issues have changed that. Until things have settled, the Python-onboard package venv can be used::
 
   $ python -m venv /path/to/environment
   $ source /path/to/environment/bin/activate
   $ pip install pymodaq pyside6
 
-As path you should choose a sensible name for your project. The subfolders created in the environment folder contain links to the python interpreter to be used and will receive all packages installed by pip once the environment is activated. Some prefer to have a separate evironment for each package / plugin to be developped. Different environments are needed at least when working with different versions of some packages in parallel. But don't worry, new environments can always be set up later in case of incompatibilites are coming up. 
+As path you should choose a sensible name for your project. The subfolders created in the environment folder contain links to the python interpreter to be used and will receive all packages installed by pip once the environment is activated. Some prefer to have a separate evironment for each package / plugin to be developped. Different environments are needed at least when working with different versions of some packages in parallel. But don't worry, new environments can always be set up later in case that incompatibilites come up. 
 
-The activation will add the environment's bin directory to the head of the current search path so that the binaries therein will be found before any others with the same name. If you whish to use a specific pythom version, say 3.12, call::
+The activation will add the environment's bin directory to the head of the current search path so that the binaries therein will be found before any others with the same name. If you wish to use a specific pythom version, say 3.12, call::
 
   $ python3.12 -m venv /path/to/environment
 
@@ -97,5 +99,8 @@ When we fire up the dashbord now and start the preset-manager, a new item 'DAQ0D
 	   
 A few words on the conda environments may be worth mentioning here.
 
-* A commen problem in Linux environments is that python comes already with the system installation and is used for various tasks. However, no environments are set up by default. This may screw up things when python packages are installed as superuser but not using the system's package manager (like apt for Debian). The latter and the work of the distribution maintainers take care of version issues. However, when using sudo pip install ... you are on your own and may not have been aware of possible problems when having done such in the past. 
+* A commen problem in Linux environments is that python comes already with the system installation and is used for various tasks. However, no environments are set up by default. This may screw up things when python packages are installed as superuser but not using the system's package manager (like apt for Debian). The latter and the work of the distribution maintainers take care of version issues. However, when using sudo pip install ... you are on your own and may not have been aware of possible problems when having done such in the past.
+
+  Therefore, use pip only in virtual environments. Outside, use the system's package manager instead.
+
 * PyCharm seems to have some difficulties in coping with already existing conda environments. After setting everything according to the instructions on the JetBrains website, the prompt in the terminal may show that instead of the chosen environment, PyCharm has actually activated the base environment. Supposedly missing packages are a good indication that this happened. Creating new environments from inside PyCharm seems to work more reliably.
