@@ -16,6 +16,8 @@ The code shown in this tutorial has been developped and tested under Linux. The 
    move.rst
    dashboard.rst
    extension.rst
+   absorption.rst
+   photochem.rst
 
 
 Indices and tables

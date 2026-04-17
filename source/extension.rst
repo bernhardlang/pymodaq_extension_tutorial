@@ -12,7 +12,7 @@ In a first step we have to modify the file:`pyproject.toml` in the module's root
     models = false
     ...
 
-Next we have to moveto the extension folder
+Next we have to move to the extension folder
 
 .. code-block::
 
@@ -42,56 +42,6 @@ Now load the renamed file and adapt the names close to the top of the file accor
     class Absorption(CustomExt):
     ...
 
-The spectrometer program shall have three different modes of operation, display raw data, display background subtracted data and display absorption. Let's define constants to reflect these modes at the top level of the extension file
-
-.. code-block::
-   :emphasize-lines: 4-6,10-
-
-    ...
-    CLASS_NAME = 'Absorption'
-
-    RAW             = 0
-    WITH_BACKGROUND = 1
-    ABSORPTION      = 2
-
-    class Absorption(CustomExt):
-
-        measurement_modes = {
-            'Raw': RAW, 'Background Subtracted': WITH_BACKGROUND,
-            'Absorption': ABSORPTION
-            }
-
-
-The paramaters controlling the spectrometer are all accessible in the preset and could be changed via a parameter tree in a deticated detector view. However, to ease operating the device, we'll define a set of most important parameters in the preable of the extension's class which will be displayed in the main window of the spectrometer application.
-
-.. code-block::
-
-    class Absorption(CustomExt):
-
-        ...
-
-        params = [
-            {'name': 'back_samples', 'title': 'Background Samples',
-             'type': 'int', 'min': 1, 'max': 1000, 'value': 100,
-             'tip': 'Background Software Averaging'},
-            {'name': 'ref_samples', 'title': 'Reference Samples',
-             'type': 'int', 'min': 1, 'max': 1000, 'value': 100,
-             'tip': 'Reference Software Averaging'},
-            {'name': 'measurement_mode', 'title': 'Measurement Mode',
-             'type': 'list', 'limits': list(measurement_modes.keys()),
-             'tip': 'Measurement Mode'},
-            {'name': 'device_params', 'title': 'Device parameters', 'type': 'group',
-             'children': [
-                 {'name': 'integration_time', 'title': 'Integration Time [ms]',
-                  'type': 'float', 'min': 0.001, 'max': 10000, 'value': 50,
-                  'tip': 'Integration time in seconds'},
-                 {'name': 'averaging', 'title': 'Averaging',
-                  'type': 'int', 'min': 1, 'max': 1000, 'value': 10,
-                  'tip': 'Software Averaging'},
-                 ]
-             },
-           ]
-
 Next comes the initialisation of the instance of the absorption extension. For the moment we just declare the type of the detector so that an IDE can guess it.
 
 .. code-block::
@@ -105,14 +55,9 @@ Next comes the initialisation of the instance of the absorption extension. For t
             super().__init__(parent, dashboard)
             self.setup_ui()
 
-A simple mockup ofthe GUI of our extension shows the general idea.
+Though the method :code:`setup_ui` needs to be called in any custom extension, this is not done in the inherited classes' initialisation to permit setting up some matter which is needed to initilise its UI but needs in turn the parent class already to be initialised.
 
-.. image:: extension-mockup.png
-   :align: center
-
-The top left of the main window contains a list of general controlling parameters. Two graphics for displaying auxiliary data are placed below this area. The current acquisition is displayed in the main DAQ_Viewer on the right.
-
-Each widget, be that a code:`ParameterTree` or a code:`DAQ_Viewer` or anything else is placed into a dock. An instance variable of the extension takes care of the book keeping of docks.
+The main window of the application is accessible through the instance variable :code:`self.dockarea`. Any widgets can be added to this area via instances of :code:`Dock'. the following code creates the display for the current measurement. It should be pretty self explaining.
 
 .. code-block::
 
@@ -121,55 +66,19 @@ Each widget, be that a code:`ParameterTree` or a code:`DAQ_Viewer` or anything e
     ...
  
         def setup_docks(self):
-            # left column: essential parameters at top, small plots for dark and
-            # reference signals
-            # main area for current data
             self.create_dashboard_toolbar()
 
-            # top left, essential parameters
-            self.docks['settings'] = Dock('Application Settings')
-            self.dockarea.addDock(self.docks['settings'])
-            self.docks['settings'].addWidget(self.settings_tree)
+            self.spectrum_label = DockLabel("Raw Data")
+            spectrum_dock = Dock('Data', label=self.spectrum_label)
+            self.docks['spectrum'] = \
+                self.dockarea.addDock(spectrum_dock, "right",
+                                      self.docks['settings'])
+            spectrum_widget = QtWidgets.QWidget()
+            self.spectrum_viewer = Viewer1D(spectrum_widget)
+            self.spectrum_viewer.toolbar.hide()
+            spectrum_dock.addWidget(spectrum_widget)
 
-After this example the follwoing code for the rest of the GUI should be pretty self expalining.
-
-.. code-block::
-
-    def setup_docks(self):
-    ...
-        # main area with spectrum plot
-        self.spectrum_label = DockLabel("Raw Data")
-        spectrum_dock = Dock('Data', label=self.spectrum_label)
-        self.docks['spectrum'] = \
-            self.dockarea.addDock(spectrum_dock, "right",
-                                  self.docks['settings'])
-        spectrum_widget = QWidget()
-        self.spectrum_viewer = Viewer1D(spectrum_widget)
-        self.spectrum_viewer.toolbar.hide()
-        spectrum_dock.addWidget(spectrum_widget)
-
-        # plot for raw spectrum data and reference 
-        raw_data_dock = Dock('Raw Data')
-        self.docks['raw-data'] = \
-            self.dockarea.addDock(raw_data_dock, "bottom",
-                                  self.docks['settings'])
-        raw_data_widget = QWidget()
-        self.raw_data_viewer = Viewer1D(raw_data_widget)
-        self.raw_data_viewer.toolbar.hide()
-
-        raw_data_dock.addWidget(raw_data_widget)
-
-        # plot for background 
-        background_dock = Dock('Background')
-        self.docks['background'] = \
-            self.dockarea.addDock(background_dock, "bottom",
-                                  self.docks['raw-data'])
-        background_widget = QWidget()
-        self.background_viewer = Viewer1D(background_widget)
-        background_dock.addWidget(background_widget)
-        self.background_viewer.toolbar.hide()
-
-To be able to test the newly constructed GUI we have to temporarily disable a method which has to be populated later, once we've implemented the methods to be called therein.
+To be able to test the newly constructed GUI, method populated later has to be temporarily disabled.
 
 .. code-block::
    :emphasize-lines: 6
@@ -183,18 +92,106 @@ To be able to test the newly constructed GUI we have to temporarily disable a me
             """Method where to create actions to be subclassed. Mandatory
             ...
             
-We may now launch the dashboard
+The dashboard may now be launched
 
 .. code-block::
 
    $ dashboard -p absorption
 
-The list of extensions should contain now an entry "Absorption". After launching our extension, a window should pop up which looks like the following
+The list of extensions should contain now an entry "Absorption". After starting it, a window should pop up which looks like the following
 
 .. image:: bare-extension.png
 
-We can play with this extension. But it hasn't got any functionality yet. Note that when changing the measurement mode, an exception about a missing attribute is raised. This is correct because that attribute is yet to be coded.
-To access all entries on the parameter tree, the window will probably have to be resized. Upon shutting down and restarting the dashboard, the extension's window will show up again at its original size, which is probably not what is wanted. Let's make changes to the GUI staying permanently. Two functions, inverse of each other, take care of writing the current parameter values and geometry settings to a configuration file and reading them back. This is done here in a preliminary fashion using Qt's settings mechanism. **@PyMoDAQxperts:** please replace this with more PyMoDAQonian style ...
+However, it hasn't got any functionality yet. To get things working in a preliminary and primitive fashion we add a method that accepts data from the spectrograph's 1D viewer plugin. It simply extracts the raw spectrometer data from the received :code:`DataToExport` object and displays that in the viewer.
+
+.. code-block::
+
+    class Absorption(CustomExt):
+
+    ...
+ 
+        def take_data(self, data: DataToExport):
+            spectro_data = data.get_data_from_dim('Data1D')[0]
+            self.spectrum_viewer.show_data(spectro_data)
+
+Once the dashboard has been loaded with the preset, the devices defined in the preset can be registered with the modules manager. This allows to obtain a reference to the detector which can be connected to the data display.
+
+.. code-block::
+
+    class Absorption(CustomExt):
+
+    ...
+
+        def do_things_after_preset_set(self, preset_name: str):
+            self.modules_manager.detectors_all = \
+                self.dashboard.modules_manager.detectors_all
+
+            self.detector = \
+                self.modules_manager.get_mod_from_name('Spectrometer',
+                                                       ModuleType.Detector)
+            self.detector.grab_done_signal.connect(self.take_data)
+            self.x_axis = \
+                Axis(label='Wavelength', units='nm',
+                     data=self.detector.controller.wavelengths, index=0)
+
+Note that it is assumed here for sake of simplicity and for the now that the spectrometer exports its wavelength calibration by a :code:`wavelength` property. This may not be the case for any spectrograph and will be covered in a more general fashion later. There's another issue here how to identify the device of choice. :code:`ModulesManager.get_mod_from_name` needs to get the name  exactly as we have defined it in the preset. However, how should a non-developping user know what to enter there, unless having been specificly instructed? We'll cover that later with an appropriated configuration dialog. For now, we'll have to pay attention that the two names match exactly.
+
+Two methods take care of starting and ending the acquisition 
+
+.. code-block::
+
+    class Absorption(CustomExt):
+
+    ...
+
+        def start_acquiring(self):
+            self.detector.grab()
+
+        def stop_acquiring(self):
+            self.detector.stop_grab()
+
+To make them acessible by the GUI, two methods predefined in the template have to be populated
+
+.. code-block::
+
+    def setup_actions(self):
+        self.add_action('acquire', 'Acquire', 'run2',
+                        "Acquire", checkable=False, toolbar=self.toolbar)
+        self.add_action('stop', 'Stop', 'stop2',
+                        "Stop", checkable=False, toolbar=self.toolbar)
+
+    def connect_things(self):
+        self.connect_action('acquire', self.start_acquiring)
+        self.connect_action('stop', self.stop_acquiring)
+
+The extension has now a tool bar from which the acquistion can be started and stopped.
+
+.. image:: extension-with-toolbar.png
+
+At this point the extension does nothing more than what is already happening in the panel named "Spectrometer MockSpectro" in the dashboard. When starting acquisition in the extension, the recorded data is updated both in the extension and in the dashboard, while starting the acquisition in the latter, data is updated on the latter.
+
+Stopping acquisition before it has been started doesn't make much sense. PyMoDAQ still handles the situation correctly. However, necessary actions unknown to PyMoDAQ may not do so. It is therefore better to activate only those actions which actually make sense.
+
+.. code-block::
+   :emphasize-lines: 6,7,11,12
+
+    def setup_actions(self):
+        ...
+        self._actions["stop"].setEnabled(False)
+
+    def start_acquiring(self):
+        self._actions["acquire"].setEnabled(False)
+        self._actions["stop"].setEnabled(True)
+        self.detector.grab()
+
+    def stop_acquiring(self):
+        self._actions["acquire"].setEnabled(True)
+        self._actions["stop"].setEnabled(False)
+        self.detector.stop_grab()
+
+Note that this introduces a bug. The dasboard is of course not aware of the functionality created in the extension. When starting or stopping the acquisition, the tool bar buttons in the extension are not updated. this will be addressed later on.
+
+You may have noticed while playing around with the extension that opens up with size which is not very suitable. And changes to the window are not preserved over quitting the dashboard. Let's make changes to the GUI staying permanently. Two functions, inverse of each other, take care of writing the current parameter values and geometry settings to a configuration file and reading them back. This is done here in a preliminary fashion using Qt's settings mechanism. **@PyMoDAQxperts:** please replace this with more PyMoDAQonian style ...
 
 
 .. code-block::
@@ -224,13 +221,11 @@ To access all entries on the parameter tree, the window will probably have to be
 To make this work, the two functions have to be hooked up into the initialisation and shut down procedures.
 
 .. code-block::
-   :emphasize-lines: 6-9,11-
+   :emphasize-lines: 4-7,9-
 
     def __init__(self, parent: gutils.DockArea, dashboard):
         ...
-        self.measurement_mode = \
-            self.measurement_modes[self.settings['measurement_mode']]
-
+        self.setup_ui()
         config_dir = get_set_config_dir("gui-state", user=True)
         settings_file_name = f'{config_dir}/{EXTENSION_NAME}.conf'
         self.qt_settings = QSettings(settings_file_name, QSettings.NativeFormat)
@@ -239,89 +234,44 @@ To make this work, the two functions have to be hooked up into the initialisatio
     def quit_fun(self):
         self.write_settings(self.qt_settings)
 
-Have a try. Resizing the extension window should now persist over shutting down and restarting the dashboard.
+The first newly introduced line in the init method returns a path to a subfolder :file:`gui-state` located in the user's PyMoDAQ configuration folder. If that subfolder didn't exist yet its is creared. GUI settings can go in there now. Have a try. Resizing the extension window should now persist over shutting down and restarting the extension and the dashboard.
 
-Before addressing real measurement matter, let's fill first in the yet missing boiler plate code. We start with the actions to be defined in the toolbar
+
+The paramaters controlling the spectrometer are all accessible in the preset and could be changed via the detector's widget in the dashboard. However, to ease operating the device, a set of most important parameters shall be displayed in the main window of the spectrometer application. They are declared in the preamble of the extension class in the same fashion as device parameters in the preamble of a plugin class. All parameters defined in :code:`params[]` are avaliable in :code:`self.settings_tree`.
 
 .. code-block::
+   :emphasize-lines: 20-22
 
     class Absorption(CustomExt):
 
-    ...
- 
-        def setup_actions(self):
-            self.add_action('acquire', 'Acquire', 'run2',
-                            "Acquire", checkable=False, toolbar=self.toolbar)
-            self.add_action('stop', 'Stop', 'stop2',
-                            "Stop", checkable=False, toolbar=self.toolbar)
-            self.add_action('background', 'Take Background', 'brightness_3',
-                            "Take Background", checkable=False,
-                            toolbar=self.toolbar)
-            self.add_action('reference', 'Take Reference', 'lightbulb',
-                            "Take Reference", checkable=False,
-                            toolbar=self.toolbar)
-            self.add_action('save', 'Save', 'SaveAs', "Save current data",
-                            checkable=False, toolbar=self.toolbar)        
-            self.add_action('show', 'Show/hide', 'read2', "Show Hide DAQViewer",
-                            checkable=True, toolbar=self.toolbar)
-            self._actions["stop"].setEnabled(False)
+        ...
 
-When launching the extension from the dashboard, a toolbar with the spectrometer actions should show up now.
+        params = [
+            {'name': 'device_params', 'title': 'Device parameters', 'type': 'group',
+             'children': [
+                 {'name': 'integration_time', 'title': 'Integration Time [ms]',
+                  'type': 'float', 'min': 0.001, 'max': 10000, 'value': 50,
+                  'tip': 'Integration time in seconds'},
+                 {'name': 'averaging', 'title': 'Averaging',
+                  'type': 'int', 'min': 1, 'max': 1000, 'value': 10,
+                  'tip': 'Software Averaging'},
+               ]
+             },
+           ]
 
-.. image:: extension-with-toolbar.png
+        ...
 
-If you need icons which are not present in the icon library (:file:`pymodaq_gui/resources/icon_library`), you'll have to select suitable ones at https://fonts.google.com/icons. To be able to add them to PyMoDAQ's icon library you have to fork the PyMoDAQ repository, add the icons' names to the list in :file:`pymodaq_gui/resources/icons.toml` and follow the instructions in there and in :file:`pymodaq_gui/resources/check_icons_dev.py`. After a pull request, the additional icons will be available to all PyMoDAQ users. During development it is sufficient to install the pymodaq_gui package in editable mode within your work environment.
+        def setup_docks(self):
+            self.create_dashboard_toolbar()
 
-The newly defined actions do not yet trigger any real operations. We'll dive into that now. Incoming acquistions are accumulated.
+            self.docks['settings'] = Dock('Application Settings')
+            self.dockarea.addDock(self.docks['settings'])
+            self.docks['settings'].addWidget(self.settings_tree)
 
-.. code-block::
+            self.spectrum_label = DockLabel("Raw Data")
+            ...
 
-    class Absorption(CustomExt):
-
-    ...
- 
-        def accumulate_data(self, data, n_samples):
-            if n_samples:
-                self.sum_data += data
-                self.squares_data += data**2
-            else:
-                self.sum_data = data
-                self.squares_data = data**2
-            return n_samples + 1
-
-Once the accumulation limit according to the corresponding settings parameter is reached, mean and standard error have to be calculated
-
-.. code-block::
-
-    class Absorption(CustomExt):
-
-    ...
- 
-        def average_data(self, sum_data, squares_data, n_samples):
-            mean = sum_data / n_samples
-            error = np.sqrt((n_samples * squares_data - sum_data**2)
-                            / (n_samples**2 * (n_samples - 1)))
-            return mean, error
-
-.. code-block::
-
-    class Absorption(CustomExt):
-
-    ...
- 
-        def do_things_after_preset_set(self, preset_name: str):
-            self.modules_manager.actuators_all = \
-                self.dashboard.modules_manager.actuators_all
-            self.modules_manager.detectors_all = \
-                self.dashboard.modules_manager.detectors_all
-
-            self.detector = \
-                self.modules_manager.get_mod_from_name('Spectrometer',
-                                                       ModuleType.Detector)
-            self.detector.grab_done_signal.connect(self.take_data)
-            # ok here?
-            self.x_axis = Axis(label='Wavelength', units='nm',
-                               data=self.detector.controller.wavelengths, index=0)
+To make the detector aware of parameter changes, another predefined method has to be populated
 
 .. code-block::
 
@@ -334,98 +284,102 @@ Once the accumulation limit according to the corresponding settings parameter is
                 self.detector.settings.child('detector_settings',
                                              'integration_time') \
                                       .setValue(param.value())
-                # background and reference should be measurement with the same
-                # integration time
-                if self.measurement_mode in [WITH_BACKGROUND, ABSORPTION]:
-                    self.detector.stop()
-                self.have_background = False
-                self.have_reference = False
-                self.adjust_actions()
 
-            if param.name() == "averaging":
-                self.average = param.value()
-            if param.name() == "pymo_averaging":
-                self.detector.settings.child('main_settings', 'Naverage') \
-                                             .setValue(param.value())
-            elif param.name() == "back_averaging":
-                self.background_average = param.value()
-            elif param.name() == "measurement_mode":
-                self.measurement_mode = self.measurement_modes[param.value()]
-
-            if hasattr(self, 'measurement_mode'):
-                self.adjust_operation()
-                self.adjust_actions()
+To prevent the contents of an obsolete configuration file messing up the layout, remove the file in question
 
 .. code-block::
 
-    class Absorption(CustomExt):
+   $ rm ~/.pymodaq/gui-state/Absorption.conf
 
-    ...
- 
-        def adjust_actions(self):
-            """Disable actions which need other actions to be performed first.
-            A reference can only be taken when a background has been measured.
-            Acquisition in absorption mode needs a reference (and therefore also
-            a background).
-            """
-            if self.measurement_mode == RAW:
-                self._actions["acquire"].setEnabled(True)
-                self._actions["background"].setEnabled(False)
-                self._actions["reference"].setEnabled(False)
-            if self.measurement_mode == WITH_BACKGROUND:
-                self._actions["acquire"].setEnabled(self.have_background)
-                self._actions["background"].setEnabled(True)
-                self._actions["reference"].setEnabled(False)
-            if self.measurement_mode == ABSORPTION:
-                self._actions["acquire"].setEnabled(self.have_reference)
-                self._actions["background"].setEnabled(True)
-                self._actions["reference"].setEnabled(self.have_background)
+The Absorption extension should now look like
+
+.. image:: parameters.png
+
+The parameter ``Average`` has not yet any effect. Let's change that. 
 
 .. code-block::
+   :emphasize-lines: 7-20,25,26
 
     class Absorption(CustomExt):
 
-    ...
- 
-        def adjust_operation(self):
-            """Stop acquisition if background / reference is missing but needed"""
-            if self.measurement_mode < WITH_BACKGROUND:
-                dock_title = "Raw Data"
+        ...
+
+        def take_data(self, data: DataToExport):
+            spectro_data = data.get_data_from_dim('Data1D')[0]
+            self.n_samples = self.accumulate_data(spectro_data[0], self.n_samples)
+            if self.n_samples < self.n_average:
+                return
+            
+            if self.n_average < 2:
+                self.spectrum_viewer.show_data(spectro_data)
+                return
+
+            mean, error = \
+                self.average_data(self.sum_data, self.squares_data, self.n_samples)
+            dfp = DataFromPlugins(name=name, data=[mean, error], dim='Data1D',
+                                  labels=[name, 'error'], axes=[self.x_axis])
+            self.spectrum_viewer.show_data(dfp)
+            self.n_samples = 0
+
+        ....
+
+        def start_acquiring(self):
+            self.n_samples = 0
+            self.n_average = self.settings.child('device_params')['averaging']
+            ...
+
+        def accumulate_data(self, data, n_samples):
+            if n_samples:
+                self.sum_data += data
+                self.squares_data += data**2
             else:
-                dock_title = "Absorption" if self.measurement_mode == ABSORPTION \
-                    else "Background Subtracted Data"
-                if not self.have_background:
-                    self.detector.stop()
-                elif self.measurement_mode == ABSORPTION \
-                  and not self.have_reference:
-                    self.detector.stop()
+                self.sum_data = data
+                self.squares_data = data**2
+            return n_samples + 1
 
-            self.spectrum_label.setText(dock_title)
+        def average_data(self, sum_data, squares_data, n_samples):
+            mean = sum_data / n_samples
+            error = np.sqrt((n_samples * squares_data - sum_data**2)
+                            / (n_samples**2 * (n_samples - 1)))
+            return mean, error
+
+Zooming in on the error curve permits to see how the error scales now with :math:`\sqrt{n_\mathrm{average}}`.
+
+Once again, changes on the parameters do not survive quitting. One could write them to and recover them from a config file one by one. However, expecting the number of parameters to increase with time, it will be advantageous on the long run to prepare for that now. Since the device params are a dict inside a dirct inside an array, it is easier to declare them in a separate list 
 
 .. code-block::
-
+   :emphasize-lines: 3-15,21-23,27-
+   
     class Absorption(CustomExt):
+
+        device_params = [
+            {'name': 'integration_time', 'title': 'Integration Time [ms]',
+             'type': 'float', 'min': 0.001, 'max': 10000, 'value': 50,
+             'tip': 'Integration time in seconds'},
+            {'name': 'averaging', 'title': 'Averaging',
+             'type': 'int', 'min': 1, 'max': 1000, 'value': 10,
+             'tip': 'Software Averaging'},
+            ]
+
+        params = [
+            {'name': 'device_params', 'title': 'Device parameters', 'type': 'group',
+             'children': device_params },
+            ]
 
     ...
  
-        def connect_things(self):
-            self.connect_action('save', self.save_current_data)
-            self.connect_action('show', self.show_detector)
-            self.connect_action('acquire', self.start_acquiring)
-            self.connect_action('stop', self.stop_acquiring)
-            self.connect_action('background', self.take_background)
-            self.connect_action('reference', self.take_reference)
+        def read_settings(self, qt_settings):
+            ...
+            for param in self.device_params:
+                self.settings.child('device_params')[param['name']] = \
+                    qt_settings.value(param['name'], param['value'])
 
-.. code-block::
+        def write_settings(self, qt_settings):
+            ...
+            for param in self.device_params:
+                qt_settings.setValue(name, 
+                                     self.settings.child('device_params')[param['name']])
 
-    class Absorption(CustomExt):
+The second argument of :code:`QSettings.value` is a default value which prevents a :code:`None` value being inserted when the entry asked for is not present in the configuration file, which would cause an exception to be raised.
 
-    ...
- 
-        def setup_menu(self, menubar: QtWidgets.QMenuBar = None):
-            file_menu = self.mainwindow.menuBar().addMenu('File')
-            self.affect_to('save', file_menu)
-            file_menu.addSeparator()
-            #self.affect_to('quit', file_menu)
- 
-To display background subtracted data, the background signal has to be recorded beforehand. Likewise, displaying the absorption asks for recording the incident light intensity (we'll call it 'reference'). Therefore, these measurements modes should be enabled only when the necessary data has been recorded. Some instance variables keep track of that. The method code:`adjust_actions` to be defined later uses the values of these variables to determine which action, start raw recording, background subtracted and absorption, respectively, should be enabled or disabled. The inherited method code:`setup_ui` has to be called before so that the corresponding actions have been created.
+Until now, the extension does nothing more than a bare plugin can do. Deatures beyod will be introduced in the next chapter.
