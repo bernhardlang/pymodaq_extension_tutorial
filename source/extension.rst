@@ -1,7 +1,7 @@
 Extension Plugin
 ================
 
-In a first step we have to modify the file:`pyproject.toml` in the module's root directory to tell PyMoDAQ that this module also contains an extension.
+In a first step we have to modify the file :file:`pyproject.toml` in the module's root directory to tell PyMoDAQ that this module also contains an extension.
 
 .. code-block::
    :emphasize-lines: 3
@@ -12,12 +12,7 @@ In a first step we have to modify the file:`pyproject.toml` in the module's root
     models = false
     ...
 
-Next we have to move to the extension folder
-
-.. code-block::
-
-   $ mv src/pymodaq_plugins_tutorial_extension/extensions
-
+Next we have to get to the extension folder :file:`src/pymodaq_plugins_tutorial_extension/extensions`
 and rename the extension template in the extension folder, giving it a meaningful name.
 
 .. code-block::
@@ -55,9 +50,9 @@ Next comes the initialisation of the instance of the absorption extension. For t
             super().__init__(parent, dashboard)
             self.setup_ui()
 
-Though the method :code:`setup_ui` needs to be called in any custom extension, this is not done in the inherited classes' initialisation to permit setting up some matter which is needed to initilise its UI but needs in turn the parent class already to be initialised.
+Though the method :code:`setup_ui` needs to be called in any custom extension, this is not done in the inherited classes' initialisation. The aim is to permit setting up some matter which is needed to initialise its UI but needs in turn the parent class already to be initialised.
 
-The main window of the application is accessible through the instance variable :code:`self.dockarea`. Any widgets can be added to this area via instances of :code:`Dock'. the following code creates the display for the current measurement. It should be pretty self explaining.
+The main area of the application is accessible through the instance variable :code:`self.dockarea`. Any widgets can be added there via instances of :code:`Dock`. the following code creates the display for the current measurement. It should be pretty self explaining.
 
 .. code-block::
 
@@ -78,7 +73,7 @@ The main window of the application is accessible through the instance variable :
             self.spectrum_viewer.toolbar.hide()
             spectrum_dock.addWidget(spectrum_widget)
 
-To be able to test the newly constructed GUI, method populated later has to be temporarily disabled.
+To be able to test the newly constructed GUI, a method populated later has to be temporarily disabled.
 
 .. code-block::
    :emphasize-lines: 6
@@ -98,7 +93,7 @@ The dashboard may now be launched
 
    $ dashboard -p absorption
 
-The list of extensions should contain now an entry "Absorption". After starting it, a window should pop up which looks like the following
+The list of extensions should contain an entry "Absorption". After starting it, a window should pop up which looks like the following
 
 .. image:: bare-extension.png
 
@@ -113,6 +108,8 @@ However, it hasn't got any functionality yet. To get things working in a prelimi
         def take_data(self, data: DataToExport):
             spectro_data = data.get_data_from_dim('Data1D')[0]
             self.spectrum_viewer.show_data(spectro_data)
+
+Note that this assumes that the data received from the plugin contains a set of one dimensional data and that the first (or only) one dimensional array therein contains the intensity data from the spectrometer. This is where we may hit the limits for creating generic a application. A plugin written by someone alse and delivering its data in a different form may not be working here. :code:`DataToExport` comes with quite a list of methods which permit to extract contained data identified by names and labels. Having a general spectrometer application in mind, one may want to retrieve first a data set, analyse its content and give the user the choice what data item should be taken. However, for the time being we know what's in there and can just go on.
 
 Once the dashboard has been loaded with the preset, the devices defined in the preset can be registered with the modules manager. This allows to obtain a reference to the detector which can be connected to the data display.
 
@@ -134,7 +131,7 @@ Once the dashboard has been loaded with the preset, the devices defined in the p
                 Axis(label='Wavelength', units='nm',
                      data=self.detector.controller.wavelengths, index=0)
 
-Note that it is assumed here for sake of simplicity and for the now that the spectrometer exports its wavelength calibration by a :code:`wavelength` property. This may not be the case for any spectrograph and will be covered in a more general fashion later. There's another issue here how to identify the device of choice. :code:`ModulesManager.get_mod_from_name` needs to get the name  exactly as we have defined it in the preset. However, how should a non-developping user know what to enter there, unless having been specificly instructed? We'll cover that later with an appropriated configuration dialog. For now, we'll have to pay attention that the two names match exactly.
+Note that it is assumed here for sake of simplicity and for now that the spectrometer exports its wavelength calibration by a :code:`wavelength` property. This may not be the case for any spectrograph and will be covered in a more general fashion later. There's another issue here how to identify the device of choice. :code:`ModulesManager.get_mod_from_name` needs to get the name  exactly as we have defined it in the preset. However, how should a non-developping user know what to enter there, unless having been specificly instructed? We'll cover that later with an appropriated configuration dialog. For now, we'll have to pay attention that the two names match exactly.
 
 Two methods take care of starting and ending the acquisition 
 
@@ -150,9 +147,10 @@ Two methods take care of starting and ending the acquisition
         def stop_acquiring(self):
             self.detector.stop_grab()
 
-To make them acessible by the GUI, two methods predefined in the template have to be populated
+To make them accessible from the GUI, two methods predefined in the template have to be populated
 
 .. code-block::
+   :emphasize-lines: 2-5,8-
 
     def setup_actions(self):
         self.add_action('acquire', 'Acquire', 'run2',
@@ -168,7 +166,7 @@ The extension has now a tool bar from which the acquistion can be started and st
 
 .. image:: extension-with-toolbar.png
 
-At this point the extension does nothing more than what is already happening in the panel named "Spectrometer MockSpectro" in the dashboard. When starting acquisition in the extension, the recorded data is updated both in the extension and in the dashboard, while starting the acquisition in the latter, data is updated on the latter.
+At this point the extension does nothing more than what is already happening in the panel named "Spectrometer MockSpectro" in the dashboard. When starting acquisition in the extension, the recorded data is updated both in the extension and in the dashboard, while starting the acquisition in the latter, data is updated only on the latter.
 
 Stopping acquisition before it has been started doesn't make much sense. PyMoDAQ still handles the situation correctly. However, necessary actions unknown to PyMoDAQ may not do so. It is therefore better to activate only those actions which actually make sense.
 
@@ -189,9 +187,9 @@ Stopping acquisition before it has been started doesn't make much sense. PyMoDAQ
         self._actions["stop"].setEnabled(False)
         self.detector.stop_grab()
 
-Note that this introduces a bug. The dasboard is of course not aware of the functionality created in the extension. When starting or stopping the acquisition, the tool bar buttons in the extension are not updated. this will be addressed later on.
+Note that this introduces a bug. The dasboard is of course not aware of the functionality created in the extension. When starting or stopping the acquisition, the tool bar buttons in the extension are not updated. Again, this will be addressed later on.
 
-You may have noticed while playing around with the extension that opens up with size which is not very suitable. And changes to the window are not preserved over quitting the dashboard. Let's make changes to the GUI staying permanently. Two functions, inverse of each other, take care of writing the current parameter values and geometry settings to a configuration file and reading them back. This is done here in a preliminary fashion using Qt's settings mechanism. **@PyMoDAQxperts:** please replace this with more PyMoDAQonian style ...
+You may have noticed while playing around with the extension that it opens up with size which is not very suitable. And changes to the window are not preserved over quitting the dashboard. Let's make changes so that the GUI geometry stays permanently. Two functions, inverse of each other, take care of writing the current parameter values and geometry settings to a configuration file and reading them back. This is done here in a preliminary fashion using Qt's settings mechanism. **@PyMoDAQxperts:** please replace this with more PyMoDAQonian style ...
 
 
 .. code-block::
@@ -217,7 +215,7 @@ You may have noticed while playing around with the extension that opens up with 
             value = qt_settings.value(name, None)
             if value is not None:
                 self.settings[name] = value
-        
+
 To make this work, the two functions have to be hooked up into the initialisation and shut down procedures.
 
 .. code-block::
@@ -230,17 +228,16 @@ To make this work, the two functions have to be hooked up into the initialisatio
         settings_file_name = f'{config_dir}/{EXTENSION_NAME}.conf'
         self.qt_settings = QSettings(settings_file_name, QSettings.NativeFormat)
         self.read_settings(self.qt_settings)
-        
+
     def quit_fun(self):
         self.write_settings(self.qt_settings)
 
-The first newly introduced line in the init method returns a path to a subfolder :file:`gui-state` located in the user's PyMoDAQ configuration folder. If that subfolder didn't exist yet its is creared. GUI settings can go in there now. Have a try. Resizing the extension window should now persist over shutting down and restarting the extension and the dashboard.
-
+The first newly introduced line in the init method returns a path to a subfolder :file:`gui-state` located in the user's PyMoDAQ configuration folder. If that subfolder doesn't exist yet it is created. GUI settings can go in there now. Have a try, resizing the extension window should now persist over shutting down and restarting the extension and the dashboard.
 
 The paramaters controlling the spectrometer are all accessible in the preset and could be changed via the detector's widget in the dashboard. However, to ease operating the device, a set of most important parameters shall be displayed in the main window of the spectrometer application. They are declared in the preamble of the extension class in the same fashion as device parameters in the preamble of a plugin class. All parameters defined in :code:`params[]` are avaliable in :code:`self.settings_tree`.
 
 .. code-block::
-   :emphasize-lines: 20-22
+   :emphasize-lines: 23-25
 
     class Absorption(CustomExt):
 
@@ -274,6 +271,7 @@ The paramaters controlling the spectrometer are all accessible in the preset and
 To make the detector aware of parameter changes, another predefined method has to be populated
 
 .. code-block::
+   :emphasize-lines: 6-
 
     class Absorption(CustomExt):
 
@@ -298,7 +296,7 @@ The Absorption extension should now look like
 The parameter ``Average`` has not yet any effect. Let's change that. 
 
 .. code-block::
-   :emphasize-lines: 7-20,25,26
+   :emphasize-lines: 7-20,25,26,29-
 
     class Absorption(CustomExt):
 
@@ -316,10 +314,10 @@ The parameter ``Average`` has not yet any effect. Let's change that.
 
             mean, error = \
                 self.average_data(self.sum_data, self.squares_data, self.n_samples)
+            self.n_samples = 0
             dfp = DataFromPlugins(name=name, data=[mean, error], dim='Data1D',
                                   labels=[name, 'error'], axes=[self.x_axis])
             self.spectrum_viewer.show_data(dfp)
-            self.n_samples = 0
 
         ....
 
@@ -345,11 +343,11 @@ The parameter ``Average`` has not yet any effect. Let's change that.
 
 Zooming in on the error curve permits to see how the error scales now with :math:`\sqrt{n_\mathrm{average}}`.
 
-Once again, changes on the parameters do not survive quitting. One could write them to and recover them from a config file one by one. However, expecting the number of parameters to increase with time, it will be advantageous on the long run to prepare for that now. Since the device params are a dict inside a dirct inside an array, it is easier to declare them in a separate list 
+Once again, changes on the parameters do not survive quitting. One could write them to and recover them from a config file one by one. However, expecting the number of parameters to increase with time, it will be advantageous to prepare for that now. Since the device params are a dict inside a dict inside an array, it is easier to declare them in a separate list 
 
 .. code-block::
    :emphasize-lines: 3-15,21-23,27-
-   
+
     class Absorption(CustomExt):
 
         device_params = [
@@ -382,4 +380,4 @@ Once again, changes on the parameters do not survive quitting. One could write t
 
 The second argument of :code:`QSettings.value` is a default value which prevents a :code:`None` value being inserted when the entry asked for is not present in the configuration file, which would cause an exception to be raised.
 
-Until now, the extension does nothing more than a bare plugin can do. Deatures beyod will be introduced in the next chapter.
+Until now, the extension still does nothing more than a bare plugin can do. Deatures beyond will be introduced in the next chapter.

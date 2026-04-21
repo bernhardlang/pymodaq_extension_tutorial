@@ -2,8 +2,8 @@ View Plugin
 ===========
 
 The next step on the journey is to implement a viewer plugin as an interface between PyMoDAQ and our spectrometer. To this end, the template file :file:`daq_1Dviewer_Template.py` in :file:`src/pymodaq_plugins_tutorial_extension/daq_viewer_plugins/plugins_1D` has to be renamed according to PyMoDAQ's naming convention for plugins. We'll call the device MockSpectro. The file has therefore be renamed to :file:`daq_1Dviewer_MockSpectro.py`.
-The template file contains extensive information as comments which are to be replaced by the correspèonding real code.
-Inside the plugin file, a single class MockSpectro implements the interface to PyMoDAQ. Watch out for the naming convention and lowe case vs upper case. File name and class name have to match in a specific manner.
+The template file contains extensive information as comments which are to be replaced by the corresponding real code.
+Inside the plugin file, a single class MockSpectro implements the interface to PyMoDAQ. Watch out for the naming convention and lower case vs upper case. File name and class name have to match in a specific manner.
 
 
 .. code-block::
@@ -61,14 +61,13 @@ The parameters defined in the controller have to be repeated here to export them
     parameter_names = [param['name'] for param in params]
 
 The last line serves as abbreviation when handling parameter changes.
-The initialisation is done in the controller in the present case.
-We'll just tell any editing program of which type the controller should be and place a mark that the spectrometer's x-axis has yet to be determined, once the controller is up and running.
+The initialisation of these parameters is done in the controller in the present case. We'll just tell any editing program of which type the controller should be and place a mark that the spectrometer's x-axis has yet to be determined, once the controller is up and running.
 
 .. code-block::
 
     def ini_attributes(self):
         self.controller: MockSpectrograph = None
-        self.x_axis = None
+        self.x_axis: Axis = None
 
     def commit_settings(self, param: Parameter):
         if param.name() in self.parameter_names:
@@ -76,7 +75,7 @@ We'll just tell any editing program of which type the controller should be and p
 
 Changed parameter values can be directly handed over to the controller. There's no need for any manipulation on our simulated device.
 
-Initialisation of the controller has to respect a speciality of PyMoDAQ. Any plugin can be either a master which has a controller instance or a slave which shares the controller with another plugin with master role.
+The initialisation of the controller has to respect a speciality of PyMoDAQ. Any plugin can be either a master which owns a controller instance or a slave which shares the controller with another plugin with master role.
 
 .. code-block::
 
@@ -111,7 +110,7 @@ Initialisation of the controller has to respect a speciality of PyMoDAQ. Any plu
 
         initialized = False
 
-For sake of simplicity we assume here that the controller has a wavelength property. In most cases we'll be programming the controller ourselves and can thereby make sure that such property is indeed present. Should the controller be provided by the device's supplier, one may either add the property by modifying the code or use here whatever means the controller provides to obtain the spectrometer's wavelength or energy axis, e.g. a controller which exports its wavelength axis together with the recorded data.
+For sake of simplicity we assume here that the controller has a wavelength property. In case we're programming the controller ourselves we can make sure that such property is indeed present. Should the controller be provided by the device's supplier, one may either add the property by modifying the code or use here whatever means the controller provides to obtain the spectrometer's wavelength or energy axis. We may also opt to export the wavelength axis together with the recorded data. **@PyMoDAQxperts:** could this be an issue for performance when the rate of incoming data is high?
 
 Obtaining the simulated spectroscopic data is a matter of calling the corresponding method on the controller.
 That data is wrapped in :code:`DataFromPlugins` and :code:`DataToExport` so that the viewer object can determine what to do with and how to display it.

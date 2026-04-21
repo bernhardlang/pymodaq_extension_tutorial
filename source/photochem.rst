@@ -1,2 +1,2 @@
-Watching the course of a photochemical reaction
-===============================================
+Watching the course of a photochemical reaction, the sequencer
+==============================================================
