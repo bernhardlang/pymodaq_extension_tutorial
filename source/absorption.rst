@@ -49,6 +49,8 @@ To make the values of these settings persistent, their storage has to be updated
             for param in self.application_params:
                 qt_settings.setValue(name, self.settings[param['name']])
 
+`TODO: the settings values should probably go to a toml file.`
+
 The GUI has also to be updated. It is always a good idea to display all data entering into the final result in some fashion.  A simple mockup ofthe GUI of our extension shows the general idea.
 
 .. image:: extension-mockup.png
@@ -109,7 +111,7 @@ After deleting again the gui settings file, the extension should now look like
 
 If you need icons which are not present in the icon library (:file:`pymodaq_gui/resources/icon_library`), you'll have to select suitable ones at https://fonts.google.com/icons. To be able to add them to PyMoDAQ's icon library you have to fork the PyMoDAQ repository, add the icons' names to the list in :file:`pymodaq_gui/resources/icons.toml` and follow the instructions in there and in :file:`pymodaq_gui/resources/check_icons_dev.py`. After a pull request, the additional icons will be available to all PyMoDAQ users. During development it is sufficient to install the pymodaq_gui package in editable mode within your work environment.
 
-The newly defined actions do not yet trigger any real operations. However, we should prepare some book keeping to prevent exception being raised due to missing properties. In the 'Raw' mode, neither background nor reference data are needed. Both new actions should therefore be disabled in that mode. On the other hand, when selecting 'Background Subtracted', a measurement is not possible until the background has been recorded. Likewise, an absorption measurement is possible only, once both background and reference have been determined. The follwoing routine takes care of the correspong activation and deactivation operations.
+The newly defined actions do not yet trigger any real operations. However, we should prepare some book keeping to prevent exceptions being raised due to missing properties. In the 'Raw' mode, neither background nor reference data are needed. Both new actions should therefore be disabled in that mode. On the other hand, when selecting 'Background Subtracted', a measurement is not possible until the background has been recorded. Likewise, an absorption measurement is possible only once both background and reference have been determined. The follwoing routine takes care of the correspong activation and deactivation operations.
 
 .. code-block::
 
@@ -120,24 +122,24 @@ The newly defined actions do not yet trigger any real operations. However, we sh
 
         def adjust_actions(self):
 
-            def get_states(state):
-                """acquire, back, ref"""
-                if state == 'Raw':
-                    return [True, False, False]
-                if state == 'Background Subtracted':
-                    return [self.have_background, True, False]
-                if state == 'Absorption':
-                    return [ self.have_reference, True, self.have_background]
-                return [False, False, False] # busy
+            # acquire, back, ref
+            action_states = {
+                'Raw': [True, False, False],
+                'Background Subtracted': [self.have_background, True, False],
+                'Absorption': [ self.have_reference, True, self.have_background],
+                'Busy': [False, False, False]
+                }
 
             is_idle = self.acquisition_mode == 'idle'
+            mode = self.settings['measurement_mode'] if is_idle else 'Busy'
+
             self.docks['settings'].setEnabled(is_idle)
             self._actions["stop"].setEnabled(not is_idle)
-            states = get_states(self.settings['measurement_mode'] if is_idle else '')
-            for name,state in zip(["acquire", "background", "reference"], states):
+            for name,state in zip(["acquire", "background", "reference"],
+                                  action_states(mode)):
                 self._actions[name].setEnabled(state)
 
-To make this work, we need to declare the flags at initialisation and to call this method whenever the measurement mode or the state of the flags has changed. Some other parameter changes may equally call for an update of the actions. E.g. the background signal depends on the integration time. Changing the latter we have to invalidate the former. We also have to distinguish between normal acqusition and acquisition of background and reference data. Furthermore, moving the shutter or waiting for the user to exchange samples, any incoming data should be discarded.
+To make this work, we need to declare the flags at initialisation and to call this method whenever the measurement mode or the state of the flags has changed. Some other parameter changes may equally call for an update of the actions. E.g. the background signal depends on the integration time. Changing the latter we have to invalidate the former. We also have to distinguish between normal acqusition and acquisition of background and reference data. Furthermore, while the shutter is moving or we wait for the user to exchange samples, any incoming data should be discarded.
 
 .. code-block::
    :emphasize-lines: 8-11,20-
@@ -169,7 +171,7 @@ To make this work, we need to declare the flags at initialisation and to call th
   
 Adjusting the actions may not be necessary each time some parameter has changed. However, it is safer just to do so.
 
-Data coming in from the plugin have now to be handled differently, according to the acquisition mode. 
+Data coming in from the plugin have now to be handled in different ways depending on the acquisition mode. 
 
 .. code-block::
    :emphasize-lines: 9-
@@ -183,22 +185,22 @@ Data coming in from the plugin have now to be handled differently, according to 
             self.n_samples = 0
 
             if self.settings['measurement_mode'] == 'Raw':
-                self.show_data(mean, error, 'raw')
+                self.show_data(self.mean_current, self.error_current, 'raw')
                 return
 
             if self.acquisition_mode == 'normal':
-                self.take_normal(mean, error)
+                self.take_normal(self.mean_current, self.error_current)
             else:
                 self.data_valid = False
                 self.detector.stop_grab()
                 am = self.acquisition_mode
                 self.acquisition_mode = 'idle'
                 if am == 'background':
-                    self.take_background(mean, error)
+                    self.take_background(self.mean_current, self.error_current)
                 else:
-                    self.take_reference(mean, error)
+                    self.take_reference(self.mean_current, self.error_current)
 
-When measuring an absorption one has to pay attention to spectral regions with very low level signal from the whitelight lamp. In such regions on may obtain negative signals through fluctuations in the background and in consequence, the logarithm is not defined any more. To avoid :code:`NaN` values which may screw up the graphical display, a mask of validity is kept together with the reference signal.
+Spectral regions where the light leve lof the whitelight lamp is low may induce problems. In such regions one may obtain negative signals through fluctuations of the background and in consequence, the logarithm is not defined any more. To avoid :code:`NaN` values which may screw up the graphical display, a mask of validity is kept together with the reference signal.
 
 .. code-block::
 
@@ -207,23 +209,23 @@ When measuring an absorption one has to pay attention to spectral regions with v
     ...
 
         def take_normal(self, mean, error):
-            mean_signal = mean - self.background
-            error_signal = np.sqrt(error**2 + self.error_background**2)
+            self.mean_signal = mean - self.background
 
             if self.settings['measurement_mode'] == 'Background Subtracted':
-                self.show_data(mean_signal, error_signal, 'signal', mean)
+                self.error_signal = np.sqrt(error**2 + self.error_background**2)
+                self.show_data(mean, error, 'signal', mean)
             else: # self.settings['measurement_mode'] == ABSORPTION:
                 valid_mask = \
-                    np.logical_and(mean_signal > 0, self.reference_valid_mask)
+                    np.logical_and(mean > 0, self.reference_valid_mask)
                 self.absorption = \
                     np.where(valid_mask,
-                             -np.log10(mean_signal / self.reference), 0)
+                             -np.log10(mean / self.reference), 0)
                 self.error_absorption = \
                     1 / np.log(10) \
-                    * np.sqrt((error / mean_signal)**2
+                    * np.sqrt((error / mean)**2
                               + ((self.error_reference + self.error_background)
                                  / self.reference)**2
-                              + (1 / mean_signal - 1 / self.reference)**2
+                              + (1 / mean - 1 / self.reference)**2
                                 * self.error_background)
 
                 self.show_data(self.absorption, self.error_absorption, 'absorption',
@@ -270,6 +272,66 @@ When measuring an absorption one has to pay attention to spectral regions with v
                                       labels=labels, axes=[self.x_axis])
                 self.raw_data_viewer.show_data(dfp)
 
+To record the background, the shutter has to be closed. The take-background action has in fact to trigger that operation. Upon arrival, the corresponding :code:`DAQ_move` instance emits the signal :code:`move_done` which
+
+.. code-block::
+   :emphasize-lines: 9-12,16-22,24-
+
+    class Absorption(CustomExt):
+
+    ...
+
+        def do_things_after_preset_set(self, preset_name: str):
+
+            ...
+
+            self.dark_shutter = \
+            self.modules_manager.get_mod_from_name('dark-shutter',
+                                                    ModuleType.Actuator)
+            self.dark_shutter.move_done_signal.connect(self.shutter_ready)
+
+        ...
+
+        def start_background(self):
+            self.data_valid = False
+            self.acquisition_mode = 'background'
+            self.n_average = self.settings['back_averaging']
+            self.n_samples = 0
+            self.adjust_actions()
+            self.dark_shutter.move_abs(0)
+
+        def shutter_ready(self):
+            self.data_valid = True
+            if self.acquisition_mode == 'background':
+                self.detector.grab()
+            else: # idle mode
+                self.adjust_actions()
+
+Similar for the reference measurement, just that instead of closing a shutter we have to ask the user to insert a sample containing pure solvent.
+
+.. code-block::
+
+    class Absorption(CustomExt):
+
+    ...
+
+        def start_reference(self):
+            result = \
+                QMessageBox.question(None, "Reference", "Insert a blank sample",
+                                     QMessageBox.StandardButton.Ok
+                                     | QMessageBox.StandardButton.Cancel)
+            if result != QMessageBox.Ok:
+                return
+            if hasattr(self.detector.controller, 'with_sample'):
+                self.detector.controller.with_sample = False
+            self.acquisition_mode = 'reference'
+            self.n_average = self.settings['ref_averaging']
+            self.n_samples = 0
+            self.data_valid = True
+            self.adjust_actions()
+            self.detector.grab()
+
+
 To make things operative, the actions have be connected to the corresponding methods.
 
 .. code-block::
@@ -277,24 +339,88 @@ To make things operative, the actions have be connected to the corresponding met
 
     class Absorption(CustomExt):
 
-    ....
+    ...
 
         def connect_things(self):
             self.connect_action('acquire', self.start_acquiring)
             self.connect_action('stop', self.stop_acquiring)
-            self.connect_action('background', self.take_background)
-            self.connect_action('reference', self.take_reference)
+            self.connect_action('background', self.start_background)
+            self.connect_action('reference', self.start_reference)
 
+To finish up this section we add a simple method to export data in csv format. Handling H5 storage is covered in a later chapter.
 
 .. code-block::
+   :emphasize-lines: 7,8,14
 
     class Absorption(CustomExt):
 
     ...
  
+        def setup_actions(self):
+            ...
+            self.add_action('save', 'Save Current', '',
+                            "Save Current", checkable=False, toolbar=self.toolbar)
+
+        ...
+
+        def connect_things(self):
+            ...
+            self.connect_action('save', self.save_current_data)
+
         def setup_menu(self, menubar: QtWidgets.QMenuBar = None):
             file_menu = self.mainwindow.menuBar().addMenu('File')
             self.affect_to('save', file_menu)
             file_menu.addSeparator()
             #self.affect_to('quit', file_menu)
  
+        def save_current_data(self):
+            directory = self.qt_settings.value('data-dir', None)
+            if directory is None:
+                directory = "."
+            result = QFileDialog.getSaveFileName(caption="Save Data", dir=directory,
+                                                 filter="*.csv")
+            if result is None or not len(result[0]):
+                return
+
+            self.qt_settings.setValue('data-dir', path.dirname(result[0]))
+
+            wavelengths = self.detector.controller.wavelengths
+            with open(result[0], "wt") as csv_file:
+                writer = csv.writer(csv_file, delimiter=',',
+                                    quotechar='|', quoting=csv.QUOTE_MINIMAL)
+                if self.settings['measurement_mode'] == 'Raw' \
+                   or not self.have_background:
+                    writer.writerow(['wavelength', 'raw data', 'error'])
+                    for i,wl in enumerate(wavelengths):
+                        writer.writerow(['%.1f' % wl, '%.3f' % self.mean_current[i],
+                                        '%.3f' % self.error_current[i]])
+                    return
+
+                if self.measurement_mode == WITH_BACKGROUND \
+                   or not self.have_reference:
+                    writer.writerow(['wavelength', 'current data', 'current error',
+                                     'background', 'error background',
+                                     'background subtracted', 'error'])
+                    for i,wl in enumerate(wavelengths):
+                        writer.writerow(['%.1f' % wl, '%.3f' % self.mean_current[i],
+                                         '%.1f' % self.error_current[i],
+                                         '%.1f' % self.background[i],
+                                         '%.1f' % self.error_background[i],
+                                         '%.1f' % self.mean_signal[i],
+                                         '%.1f' % self.error_signal[i]])
+                    return
+
+                # self.settings['measurement_mode'] == 'Absorption'
+                writer.writerow(['wavelength', 'current data', 'current error', 'background',
+                                 'error background', 'reference', 'error reference',
+                                 'absorption', 'error'])
+                for i,wl in enumerate(wavelengths):
+                    writer.writerow(['%.1f' % wl, '%.3f' % self.mean_current[i],
+                                     '%.3f' % self.error_current[i],
+                                     '%.3f' % self.background[i],
+                                     '%.3f' % self.error_background[i],
+                                     '%.3f' % self.reference[i],
+                                     '%.3f' % self.error_reference[i],
+                                     '%.6f' % self.absorption[i],
+                                     '%.6f' % self.error_absorption[i]])
+

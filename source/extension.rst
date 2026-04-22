@@ -111,7 +111,7 @@ However, it hasn't got any functionality yet. To get things working in a prelimi
 
 Note that this assumes that the data received from the plugin contains a set of one dimensional data and that the first (or only) one dimensional array therein contains the intensity data from the spectrometer. This is where we may hit the limits for creating generic a application. A plugin written by someone alse and delivering its data in a different form may not be working here. :code:`DataToExport` comes with quite a list of methods which permit to extract contained data identified by names and labels. Having a general spectrometer application in mind, one may want to retrieve first a data set, analyse its content and give the user the choice what data item should be taken. However, for the time being we know what's in there and can just go on.
 
-Once the dashboard has been loaded with the preset, the devices defined in the preset can be registered with the modules manager. This allows to obtain a reference to the detector which can be connected to the data display.
+Once the dashboard has been loaded with the preset, the devices defined in the preset can be registered with the modules manager. This allows to obtain a reference to the detector which can be connected to the data display. The mechanism behind the scene is that once the method :code:`self.detector.grab()` is called, PyMoDAQ quests acquisition on the device in a loop. For each retrieved data item the plugin emits the signal :code:`grab_done_signal` which is connected to the extension's method :code:`take_data`.
 
 .. code-block::
 
@@ -133,7 +133,7 @@ Once the dashboard has been loaded with the preset, the devices defined in the p
 
 Note that it is assumed here for sake of simplicity and for now that the spectrometer exports its wavelength calibration by a :code:`wavelength` property. This may not be the case for any spectrograph and will be covered in a more general fashion later. There's another issue here how to identify the device of choice. :code:`ModulesManager.get_mod_from_name` needs to get the name  exactly as we have defined it in the preset. However, how should a non-developping user know what to enter there, unless having been specificly instructed? We'll cover that later with an appropriated configuration dialog. For now, we'll have to pay attention that the two names match exactly.
 
-Two methods take care of starting and ending the acquisition 
+Two methods take care of starting and ending the acquisition.
 
 .. code-block::
 
@@ -312,11 +312,11 @@ The parameter ``Average`` has not yet any effect. Let's change that.
                 self.spectrum_viewer.show_data(spectro_data)
                 return
 
-            mean, error = \
+            self.mean_current, self.error_current = \
                 self.average_data(self.sum_data, self.squares_data, self.n_samples)
             self.n_samples = 0
-            dfp = DataFromPlugins(name=name, data=[mean, error], dim='Data1D',
-                                  labels=[name, 'error'], axes=[self.x_axis])
+            dfp = DataFromPlugins(name=name, data=[self.mean_current, self.error_current],
+                                  dim='Data1D', labels=[name, 'error'], axes=[self.x_axis])
             self.spectrum_viewer.show_data(dfp)
 
         ....
