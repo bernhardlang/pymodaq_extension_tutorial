@@ -17,7 +17,7 @@ The code shown in this tutorial has been developped and tested under Linux. The 
    dashboard.rst
    extension.rst
    absorption.rst
-   configurator.rst
+   state-manager.rst
    data-mixer.rst
    photochem.rst
 
