@@ -111,7 +111,7 @@ However, it hasn't got any functionality yet. To get things working in a prelimi
 
 Note that this assumes that the data received from the plugin contains a set of one dimensional data and that the first (or only) one dimensional array therein contains the intensity data from the spectrometer. This is where we may hit the limits for creating generic a application. A plugin written by someone alse and delivering its data in a different form may not be working here. :code:`DataToExport` comes with quite a list of methods which permit to extract contained data identified by names and labels. Having a general spectrometer application in mind, one may want to retrieve first a data set, analyse its content and give the user the choice what data item should be taken. However, for the time being we know what's in there and can just go on.
 
-Once the dashboard has been loaded with the preset, the devices defined in the preset can be registered with the modules manager. This allows to obtain a reference to the detector which can be connected to the data display. The mechanism behind the scene is that once the method :code:`self.detector.grab()` is called, PyMoDAQ quests acquisition on the device in a loop. For each retrieved data item the plugin emits the signal :code:`grab_done_signal` which is connected to the extension's method :code:`take_data`.
+Once the dashboard has been loaded with the experiment, the devices defined in the experiment can be registered with the modules manager. This allows to obtain a reference to the detector which can be connected to the data display. The mechanism behind the scene is that once the method :code:`self.detector.grab()` is called, PyMoDAQ quests acquisition on the device in a loop. For each retrieved data item the plugin emits the signal :code:`grab_done_signal` which is connected to the extension's method :code:`take_data`.
 
 .. code-block::
 
@@ -119,7 +119,7 @@ Once the dashboard has been loaded with the preset, the devices defined in the p
 
     ...
 
-        def do_things_after_preset_set(self, preset_name: str):
+        def do_things_after_experiment_set(self, experiment_name: str):
             self.modules_manager.detectors_all = \
                 self.dashboard.modules_manager.detectors_all
 
@@ -131,7 +131,7 @@ Once the dashboard has been loaded with the preset, the devices defined in the p
                 Axis(label='Wavelength', units='nm',
                      data=self.detector.controller.wavelengths, index=0)
 
-Note that it is assumed here for sake of simplicity and for now that the spectrometer exports its wavelength calibration by a :code:`wavelength` property. This may not be the case for any spectrograph and will be covered in a more general fashion later. There's another issue here how to identify the device of choice. :code:`ModulesManager.get_mod_from_name` needs to get the name  exactly as we have defined it in the preset. However, how should a non-developping user know what to enter there, unless having been specificly instructed? We'll cover that later with an appropriated configuration dialog. For now, we'll have to pay attention that the two names match exactly.
+Note that it is assumed here for sake of simplicity and for now that the spectrometer exports its wavelength calibration by a :code:`wavelength` property. This may not be the case for any spectrograph and will be covered in a more general fashion later. There's another issue here how to identify the device of choice. :code:`ModulesManager.get_mod_from_name` needs to get the name  exactly as we have defined it in the experiment. However, how should a non-developping user know what to enter there, unless having been specificly instructed? We'll cover that later with an appropriated configuration dialog. For now, we'll have to pay attention that the two names match exactly.
 
 Two methods take care of starting and ending the acquisition.
 
@@ -234,7 +234,7 @@ To make this work, the two functions have to be hooked up into the initialisatio
 
 The first newly introduced line in the init method returns a path to a subfolder :file:`gui-state` located in the user's PyMoDAQ configuration folder. If that subfolder doesn't exist yet it is created. GUI settings can go in there now. Have a try, resizing the extension window should now persist over shutting down and restarting the extension and the dashboard.
 
-The paramaters controlling the spectrometer are all accessible in the preset and could be changed via the detector's widget in the dashboard. However, to ease operating the device, a set of most important parameters shall be displayed in the main window of the spectrometer application. They are declared in the preamble of the extension class in the same fashion as device parameters in the preamble of a plugin class. All parameters defined in :code:`params[]` are avaliable in :code:`self.settings_tree`.
+The paramaters controlling the spectrometer are all accessible in the experiment and could be changed via the detector's widget in the dashboard. However, to ease operating the device, a set of most important parameters shall be displayed in the main window of the spectrometer application. They are declared in the preamble of the extension class in the same fashion as device parameters in the preamble of a plugin class. All parameters defined in :code:`params[]` are avaliable in :code:`self.settings_tree`.
 
 .. code-block::
    :emphasize-lines: 23-25

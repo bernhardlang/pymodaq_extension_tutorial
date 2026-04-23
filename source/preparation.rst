@@ -87,7 +87,7 @@ To try whether things work as supposed, let's start the dashboard::
 
   $ python -m pymodaq.dashboard
 
-The dashboard should start up. However, in the preset manager, no new plugins are visible. That is all right because we haven't installed the plugin module yet. This has to happen in the so-called editable mode. To this end, change to the root directory of your plugin, where e.g. the file :file:`pyproject.toml` is to be found and type::
+The dashboard should start up. However, in the experiment manager, no new plugins are visible. That is all right because we haven't installed the plugin module yet. This has to happen in the so-called editable mode. To this end, change to the root directory of your plugin, where e.g. the file :file:`pyproject.toml` is to be found and type::
 
   $ pip install -e .
 
@@ -95,7 +95,7 @@ This tells the python installer to incorporate the module under development into
 
   $ python -m pip install pip --upgrade
 
-When we fire up the dashbord now and start the preset-manager, a new item 'DAQ0D/Template' should appear in the Detectors-Add drop-down list.
+When we fire up the dashbord now and start the experiment manager, a new item 'DAQ0D/Template' should appear in the Detectors-Add drop-down list.
 
 .. image:: preset-tutorial.png
 	   

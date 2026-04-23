@@ -1,2 +1,2 @@
-TODO Watching the course of a photochemical reaction, the sequencer
-===================================================================
+TODO Watching a photochemical reaction, the sequencer
+=====================================================

@@ -18,8 +18,8 @@ The code shown in this tutorial has been developped and tested under Linux. The 
    extension.rst
    absorption.rst
    configurator.rst
-   photochem.rst
    data-mixer.rst
+   photochem.rst
 
 
 Indices and tables

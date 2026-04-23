@@ -213,23 +213,23 @@ Spectral regions where the light leve lof the whitelight lamp is low may induce 
 
             if self.settings['measurement_mode'] == 'Background Subtracted':
                 self.error_signal = np.sqrt(error**2 + self.error_background**2)
-                self.show_data(mean, error, 'signal', mean)
+                self.show_data(self.mean_signal, error, 'signal', self.mean_signal)
             else: # self.settings['measurement_mode'] == ABSORPTION:
                 valid_mask = \
-                    np.logical_and(mean > 0, self.reference_valid_mask)
+                    np.logical_and(self.mean_signal > 0, self.reference_valid_mask)
                 self.absorption = \
                     np.where(valid_mask,
-                             -np.log10(mean / self.reference), 0)
+                             -np.log10(self.mean_signal / self.reference), 0)
                 self.error_absorption = \
                     1 / np.log(10) \
-                    * np.sqrt((error / mean)**2
+                    * np.sqrt((error / self.mean_signal)**2
                               + ((self.error_reference + self.error_background)
                                  / self.reference)**2
-                              + (1 / mean - 1 / self.reference)**2
+                              + (1 / self.mean_signal - 1 / self.reference)**2
                                 * self.error_background)
 
                 self.show_data(self.absorption, self.error_absorption, 'absorption',
-                               mean, self.reference)
+                               self.mean_signal, self.reference)
 
         def take_background(self, mean, error):
             self.background = mean
@@ -243,6 +243,14 @@ Spectral regions where the light leve lof the whitelight lamp is low may induce 
             self.background_viewer.show_data(dfp)
             self.dark_shutter.move_abs(1200)
 
+Recording the reference in the simulatged environment needs a little tweak. With the real machine, the user exchanges the sample with a pure solvent cuvette. In the present simulation this hasto be done by software. To this end we try to set the controller's property :code:`with_sample` and ignore the corresponding exception in case that fails because the real world device controller has no such property.
+
+.. code-block::
+
+    class Absorption(CustomExt):
+
+    ...
+
         def take_reference(self, mean, error):
             self.reference = mean - self.background
             self.error_reference = error
@@ -254,8 +262,10 @@ Spectral regions where the light leve lof the whitelight lamp is low may induce 
                                   axes=[self.x_axis])
             self.spectrum_viewer.show_data(dfp)
             self.raw_data_viewer.show_data(dfp)
-            if hasattr(self.detector.controller, 'with_sample'):
+            try:
                 self.detector.controller.with_sample = True
+            except:
+                pass
             self.adjust_actions()
 
         def show_data(self, mean, error, name, raw=None, reference=None):
@@ -281,7 +291,7 @@ To record the background, the shutter has to be closed. The take-background acti
 
     ...
 
-        def do_things_after_preset_set(self, preset_name: str):
+        def do_things_after_experiment_set(self, experiment_name: str):
 
             ...
 
@@ -307,7 +317,7 @@ To record the background, the shutter has to be closed. The take-background acti
             else: # idle mode
                 self.adjust_actions()
 
-Similar for the reference measurement, just that instead of closing a shutter we have to ask the user to insert a sample containing pure solvent.
+Similar for the reference measurement, just that instead of closing a shutter we have to ask the user to insert a sample containing pure solvent. And again the tweak on the simulation controller.
 
 .. code-block::
 
@@ -322,8 +332,10 @@ Similar for the reference measurement, just that instead of closing a shutter we
                                      | QMessageBox.StandardButton.Cancel)
             if result != QMessageBox.Ok:
                 return
-            if hasattr(self.detector.controller, 'with_sample'):
+            try:
                 self.detector.controller.with_sample = False
+            except:
+                pass
             self.acquisition_mode = 'reference'
             self.n_average = self.settings['ref_averaging']
             self.n_samples = 0

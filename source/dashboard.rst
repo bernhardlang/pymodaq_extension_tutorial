@@ -1,13 +1,13 @@
 Playing with the devices in the dashboard
 =========================================
 
-To let the simulated spectrometer and shutter act together we have to join them in a dashboard preset. Start the dashboard, open the preset manager and click the icon for generating a new preset. Name it 'absorption' and add an actuator of type MockShutter and a detector of type MockSpectro. Your preset definition should now look like
+To let the simulated spectrometer and shutter act together we have to join them in a dashboard experiment. Start the dashboard, open the experiment manager and click the icon for generating a new experiment. Name it 'absorption' and add an actuator of type MockShutter and a detector of type MockSpectro. Your experiment definition should now look like
 
 .. image:: preset-manager.png
 
 Change the values in the fields according to the above image. It is important that the actuator is marked as Slave and the detector as Master and that they share the same Controller ID (the actual number doesn't matter at all).
 
-Once you launch the preset, your dashboard should present the dark shutter plugin GUI and the spectrometer plugin GUI.
+Once you launch the experiment, your dashboard should present the dark shutter plugin GUI and the spectrometer plugin GUI.
 
 .. image:: dashboard.png
 
