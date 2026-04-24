@@ -1,9 +1,7 @@
 Using the state Manager
 =======================
 
-We create a new file :file:`state_absorption_extension.py` and fill it with
-
-.,. state configs to be added .,.
+This section covers the use of the state manager. It can be used to trigger actions on actuators and to change parameter values on plugins. We'll use it here to close and open the shutter for background acquisition. Since we want to keep the already working extension in place, let's create a new file :file:`state_absorption_extension.py` and fill it with the following
 
 .. code-block::
 
@@ -27,26 +25,17 @@ We create a new file :file:`state_absorption_extension.py` and fill it with
 
     class ConfigAbsorption(Absorption):
 
-        def do_things_after_experiment_set(self, experiment_name: str):
-            self.modules_manager.actuators_all = \
-                self.dashboard.modules_manager.actuators_all
-            self.modules_manager.detectors_all = \
-                self.dashboard.modules_manager.detectors_all
-
-            self.detector = \
-                self.modules_manager.get_mod_from_name('Spectrometer',
-                                                       ModuleType.Detector)
-            self.detector.grab_done_signal.connect(self.take_data)
-            # ok here?
-            self.x_axis = \
-                Axis(label='Wavelength', units='nm',
-                     data=self.detector.controller.wavelengths, index=0)
-
-            self.acquisition_mode_hook = \
-                self.modules_manager.get_mod_from_name('acquisition-mode',
-                                                       ModuleType.Actuator)
-            self.acquisition_mode_hook.controller.mode_changed\
-                                            .connect(self.set_acquisition_mode)
+        def start_background(self):
+            self.data_valid = False
+            self.n_average = self.settings['back_averaging']
+            self.n_samples = 0
+            self.adjust_actions()
+            self.state_manager.entry = 'background'
+            self.state_manager.execute_entry()
+            if self.state_manager.entry_applied:
+                self.acquisition_mode = 'background'
+                self.detector.grab()
+                self.data_valid = True
 
         def take_background(self, mean, error):
             self.background = mean
@@ -60,23 +49,10 @@ We create a new file :file:`state_absorption_extension.py` and fill it with
             self.background_viewer.show_data(dfp)
             self.state_manager.entry = 'spectrum'
             self.state_manager.execute_entry()
-            self.adjust_actions()
-
-        def start_background(self):
-            self.data_valid = False
-            self.n_average = self.settings['back_averaging']
-            self.n_samples = 0
-            self.adjust_actions()
-            self.state_manager.entry = 'background'
-            self.state_manager.execute_entry()
             if self.state_manager.entry_applied:
-                self.detector.grab()
-                self.data_valid = True
+                self.acquisition_mode = 'idle'
+                self.adjust_actions()
 
-        def set_acquisition_mode(self, mode: str):
-            # could we have a racing condition here?
-            print(f'set mode to {mode}')
-            if self.acquisition_mode != mode:
-                self.acquisition_mode = mode
-                self.n_samples = 0
-                self.data_valid = True
+The code of :code:`take_background` is slightly longer than the version it overloads. However, the method :code:`shutter_ready` will not be used any more because :code:`StateManager.execute_entry()` only returns once the actions asked for in the state configuration have all completed.
+
+Launch the dashboard and load the :file:`absorption` experiment. The state manager permits now to create sets of configuration operations. Click on the New item on top of the right panel and enter :file:`background` as name. Upon a right click into the configuration area below select :file:`Add Special Configuation -> Actuator value`. Choose the dark shutter here and set the actuator value to zero. Activate the configuration once to get it saved (that's a bug-like trap!)
