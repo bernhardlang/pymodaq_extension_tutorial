@@ -117,7 +117,7 @@ That data is wrapped in :code:`DataFromPlugins` and :code:`DataToExport` so that
 
 .. code-block::
 
-       def grab_data(self, Naverage=1, **kwargs):
+        def grab_data(self, Naverage=1, **kwargs):
 	    """Start grabbing from the detector
 	    Use a synchrone acquisition (blocking function)
 
@@ -144,6 +144,18 @@ That data is wrapped in :code:`DataFromPlugins` and :code:`DataToExport` so that
 
     if __name__ == '__main__':
 	main(__file__)
+
+The method needs a counter part in the controller
+
+.. code-block::
+
+    class MockSpectrograph:
+
+    ...
+
+	def grab_spectrum(self):
+	    time.sleep(max(self.integration_time * 1e-6, 0.001))
+	    return self.simulate_spectrum(True, self.with_sample)
 
 This code can be tested by directly running the plugin script as
 

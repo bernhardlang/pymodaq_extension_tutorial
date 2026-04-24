@@ -1,15 +1,15 @@
 Shutter plugin
 ==============
 
-The shutter used in this experiment is a low-cost device based on a pulse-width modulation (PWM) driven servo for modeling controlled by an arduino board. An anodised blade is fixed to the servors steerer an blocks the light beam when moved to the correct position
+The shutter used in this experiment is a low-cost device based on a pulse-width modulation (PWM) driven servo for modeling which is controlled by an arduino board. An anodised blade fixed to the servo's steerer blocks the light beam when placed accordingly
 
 .. image:: Servo-motor-circuit.png
 
-The position is controllel by the duty cycle of a pulsed signal, typically with a period of 20ms. The width of the pulse controls the position / angle.
+The position is steered by the duty cycle of a pulsed signal, typically with a period of 20ms. The width of the pulse controls the position / angle.
 
 .. image:: Servomotor_Timing_Diagram.svg.png
 
-The only thing which matters in the context of this tutorial is that the corresponding actuator plugin has to switch the (here simulated) servo between two values for shutter on closed and shutter on opened position, respectively.
+The only thing which matters in the context of this tutorial is that the corresponding actuator plugin has to move the (here simulated) servo back and forth between two positions for shutter closed and shutter opened, respectively. In thee controller file we implement a generic :code:`MocActuator` which can be specialised if needed.
 
 .. code-block::
 
@@ -31,21 +31,15 @@ The only thing which matters in the context of this tutorial is that the corresp
 
 	pass
 
+At present, we need only a single shutter. More devices will follow later on. The simulation has to know whether the sample cuvette contains the real sample or solvent only.
+
 .. code-block::
-   :emphasize-lines: 14,18-
+   :emphasize-lines: 6,10-
 
     @dataclass
     class MockSpectrograph:
 
-	integration_time: float = 50
-	n_pixels: int = 1024
-	readout_noise: int = 4
-	dark_level: float = 150
-	light_level: float = 500
-	pe_per_lsb: float = 18.3
-	adc_bits: int = 16
-	wl_from: float = 300
-	wl_to: float = 900
+        ...
 	absorption: float = 0.3
 	shutter_names = ['dark']
 
@@ -55,8 +49,10 @@ The only thing which matters in the context of this tutorial is that the corresp
 	    self.shutter = { name: MockShutter(1200)
 	                     for name in self.shutter_names }
 
-
+When recording a spectrum, the state of the shutter has to be taken into account, as well as the nature of the sample. This is the reason why the shutter plugin has to be declared as a slave sharing the spectrometer's controller. In a real experiment these two plugins would operate independently of each other.
+			  
 .. code-block::
+   :emphasize-lines: 7,8,10-
 
     class MockSpectrograph:
 
@@ -64,8 +60,6 @@ The only thing which matters in the context of this tutorial is that the corresp
 
 	def grab_spectrum(self):
 	    time.sleep(max(self.integration_time * 1e-6, 0.001))
-	    #return self.simulate_spectrum(self.get_shutter_value('dark') > 1000,
-	    #                              self.with_sample)
 	    return self.simulate_spectrum(self.get_shutter_value('dark') > 0,
 					  self.with_sample)
 
@@ -75,9 +69,13 @@ The only thing which matters in the context of this tutorial is that the corresp
 	def set_shutter_value(self, axis, value):
 	    return self.shutter[axis].move_at(value)
 
+Next, we have to rename the template file for the move plugin.
+
 .. code-block::
 
    .../daq_move_plugins$ git mv daq_move_Template.py daq_move_MockShutter.py
+
+Rename the class and pay attention to the naming convention. The preamble of the class contains the definition of a few parameters. They don't really matter here because everything is simulated.
 
 .. code-block::
 
@@ -94,6 +92,8 @@ The only thing which matters in the context of this tutorial is that the corresp
 
 	def ini_attributes(self):
 	    self.controller: MockSpectrometer = None
+
+The initialisation procedure is similar to the one of a detector plugin.
 
 .. code-block::
 
@@ -115,6 +115,8 @@ The only thing which matters in the context of this tutorial is that the corresp
 
 	def commit_settings(self, param: Parameter):
 	    pass
+
+Finally the methods for getting and setting the actuator's value, once again and for the same reason boiler-plate code only.
 
 .. code-block::
 
