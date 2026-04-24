@@ -1,4 +1,4 @@
-Using the state Manager
+Using the state manager
 =======================
 
 This section covers the use of the state manager. It can be used to trigger actions on actuators and to change parameter values on plugins. We'll use it here to close and open the shutter for background acquisition. Since we want to keep the already working extension in place, let's create a new file :file:`state_absorption_extension.py` and fill it with the following
@@ -56,3 +56,5 @@ This section covers the use of the state manager. It can be used to trigger acti
 The code of :code:`take_background` is slightly longer than the version it overloads. However, the method :code:`shutter_ready` will not be used any more because :code:`StateManager.execute_entry()` only returns once the actions asked for in the state configuration have all completed.
 
 Launch the dashboard and load the :file:`absorption` experiment. The state manager permits now to create sets of configuration operations. Click on the New item on top of the right panel and enter :file:`background` as name. Upon a right click into the configuration area below select :file:`Add Special Configuation -> Actuator value`. Choose the dark shutter here and set the actuator value to zero. Activate the configuration once to get it saved (that's a bug-like trap!)
+
+In terms of functionality, the program has not changed. Using the the state manager instead of steering the actuators directly just changes the way things are 'wired'. However, together with a state machine, this can be turned into a quite powerful tool to work on complex sequences.

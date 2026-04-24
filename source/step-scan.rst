@@ -1,2 +1,2 @@
-TODO Watching a photochemical reaction
+TODO Performing a step-scan experiment
 ======================================

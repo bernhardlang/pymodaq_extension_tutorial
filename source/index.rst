@@ -12,19 +12,21 @@ The code shown in this tutorial has been developped and tested under Linux. The 
    intro.rst
    preparation.rst
    hardware.rst
-   viewer1d.rst
-   move.rst
+   spectro-photometer.rst
+   shutter.rst
    dashboard.rst
    extension.rst
    absorption.rst
    state-manager.rst
+   fluo.rst
    data-mixer.rst
    photochem.rst
+   sequencer.rst
+   step-scan.rst
 
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`

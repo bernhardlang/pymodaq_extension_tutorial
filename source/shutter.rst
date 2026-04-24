@@ -1,5 +1,15 @@
-Move Plugin
-===========
+Shutter plugin
+==============
+
+The shutter used in this experiment is a low-cost device based on a pulse-width modulation (PWM) driven servo for modeling controlled by an arduino board. An anodised blade is fixed to the servors steerer an blocks the light beam when moved to the correct position
+
+.. image:: Servo-motor-circuit.png
+
+The position is controllel by the duty cycle of a pulsed signal, typically with a period of 20ms. The width of the pulse controls the position / angle.
+
+.. image:: Servomotor_Timing_Diagram.svg.png
+
+The only thing which matters in the context of this tutorial is that the corresponding actuator plugin has to switch the (here simulated) servo between two values for shutter on closed and shutter on opened position, respectively.
 
 .. code-block::
 
@@ -37,7 +47,7 @@ Move Plugin
 	wl_from: float = 300
 	wl_to: float = 900
 	absorption: float = 0.3
-	shutter_names = ['dark', 'excitation']
+	shutter_names = ['dark']
 
         def __post_init__(self):
 	    self.calculate_base_data()

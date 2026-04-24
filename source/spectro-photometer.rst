@@ -1,5 +1,5 @@
-View Plugin
-===========
+Spectro-Photometer plugin
+=========================
 
 The next step on the journey is to implement a viewer plugin as an interface between PyMoDAQ and our spectrometer. To this end, the template file :file:`daq_1Dviewer_Template.py` in :file:`src/pymodaq_plugins_tutorial_extension/daq_viewer_plugins/plugins_1D` has to be renamed according to PyMoDAQ's naming convention for plugins. We'll call the device MockSpectro. The file has therefore be renamed to :file:`daq_1Dviewer_MockSpectro.py`.
 The template file contains extensive information as comments which are to be replaced by the corresponding real code.
