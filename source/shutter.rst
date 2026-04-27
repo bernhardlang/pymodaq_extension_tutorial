@@ -9,7 +9,7 @@ The position is steered by the duty cycle of a pulsed signal, typically with a p
 
 .. image:: Servomotor_Timing_Diagram.svg.png
 
-The only thing which matters in the context of this tutorial is that the corresponding actuator plugin has to move the (here simulated) servo back and forth between two positions for shutter closed and shutter opened, respectively. In thee controller file we implement a generic :code:`MocActuator` which can be specialised if needed.
+The only thing which matters in the context of this tutorial is that the corresponding actuator plugin has to move the (here simulated) servo back and forth between two positions for shutter closed and shutter opened, respectively. In the controller file we implement a generic :code:`MocActuator` which is specialised as needed.
 
 .. code-block::
 
@@ -29,9 +29,17 @@ The only thing which matters in the context of this tutorial is that the corresp
 
     class MockShutter(MockActuator):
 
-	pass
+	def __init__(self, current=0):
+	    MockActuator.__init__(self, current)
+	    self.open_value = 1200
+	    self.closed_value = 1800
+	    self.epsilon = 10
 
-At present, we need only a single shutter. More devices will follow later on. The simulation has to know whether the sample cuvette contains the real sample or solvent only.
+	@property
+	def is_closed(self):
+	    return abs(self._current_value - self.closed_value) <= self.epsilon
+
+At present, we need only a single shutter. More devices will follow later on. The simulation has to know whether the sample cuvette contains the real sample or solvent only. This is taken care of by the flag :code:`with_sample`.
 
 .. code-block::
    :emphasize-lines: 6,10-
@@ -75,7 +83,7 @@ Next, we have to rename the template file for the move plugin.
 
    .../daq_move_plugins$ git mv daq_move_Template.py daq_move_MockShutter.py
 
-Rename the class and pay attention to the naming convention. The preamble of the class contains the definition of a few parameters. They don't really matter here because everything is simulated.
+Rename the class and pay attention to the naming convention. The preamble of the class contains the definition of a few properties. They don't really matter here because everything is simulated. The two parameters for open and closed position indicate where the servo has to be set when the binary actuator is set to zero and one for closed and open, respectively.
 
 .. code-block::
 
@@ -88,6 +96,10 @@ Rename the class and pay attention to the naming convention. The preamble of the
 	data_actuator_type = DataActuatorType.DataActuator
 
 	params = [
+	  {'title': 'Closed position', 'name': 'closed', 'type': 'int',
+	   'min': 500, 'max': 2100, 'value': 1200 },
+	  {'title': 'Open position', 'open', 'type': 'int',
+	   'min': 500, 'max': 2100, 'value': 1800 },
 	] + comon_parameters_fun(is_multiaxes, _axis_names, epsilon=_epsilon)
 
 	def ini_attributes(self):
@@ -113,10 +125,22 @@ The initialisation procedure is similar to the one of a detector plugin.
 	def close(self):
 	    pass
 
-	def commit_settings(self, param: Parameter):
-	    pass
+We could make ourselves life easier here by just passing on values to the controller or controlling servo values directly by the actuator value. However, i) for the time being, binary actuators handle per default only zero and one and ii) when using real servo shutters in the lab, the code is already there (they're pretty cheap and easy to make and to use).
 
-Finally the methods for getting and setting the actuator's value, once again and for the same reason boiler-plate code only.
+.. code-block::
+
+    class DAQ_Move_MockShutter(DAQ_Move_base):
+
+        ...
+
+	def commit_settings(self, param: Parameter):
+	    axis = self.settings['multiaxes', 'axis']
+	    if param.name() == 'closed':
+	        if self.controller.set_closed_value('axis', param.value())
+	    elif param.name() == 'open':
+	        if self.controller.set_open_value('axis', param.value())
+
+Finally, the methods for getting and setting the actuator's value, once again and for the same reason boiler-plate code only.
 
 .. code-block::
 
