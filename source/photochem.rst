@@ -1,103 +1,118 @@
-Watching a photochemical reaction
-=================================
+Watching a photochemical reaction, work in progress
+===================================================
 
 Description and simulation of the experiment
+--------------------------------------------
+
+In this chapter the experiment is extended to be able to monitor a photo-isomerisation reaction. Let's take azobenze as an example. It can exisit in two isomers, in trans and in cis form. The former is thermally more stable.
+
+.. image:: cis-trans.png
+   :scale: 15%
+   :align: center
+
+When left long enough in the dark, all molecules turn into trans form. Upon illumination with blue light, a fraction undergoes an isomerisation to the cis form. The cis to trans back reaction is thermally activated with a rate of roughly :math:`10^{-6}`/s at room temperature. However, the back reaction can also take place after photo-excitation of the cis form.
+
+The rate of the trans-cis isomerisation is proportional to the intensity of the excitation light. However, due to the absorption of the sample, the intensity decreases along the optical path. And since the absorption changes with the course of the reaction, the overall description of the concentrations takes the form of a nonlinear, ordinary differential equation. The number of photons absorbed in the sample of length :math:`L` in a short time, :math:`dt`, is given by Beer-Lambert's law
+
+.. math::
+
+   dn_\mathrm{ph}
+   = \frac{I_0}{h\nu}
+      \left[1
+            - 10^{-\left(\varepsilon_\mathrm{trans}c_\mathrm{trans} +
+                         \varepsilon_\mathrm{cis}c_\mathrm{cis}\right)L}\right]
+      dt
+
+where :math:`I_0` is the incident intensity of the excitation light and :math:`h\nu` its energy per photon. :math:`\varepsilon_\mathrm x` and :math:`c_\mathrm x` are the (decadic) molar extiction coefficients and the concentrations of the two species. We can separate this into the number of photons absorbed by each species individually
+
+ .. math::
+
+    dn_\mathrm{ph,trans}
+    &= \frac{I_0}{h\nu}
+       \left[1 - 10^{-\alpha_\mathrm{tot}L}\right]
+       \frac{\alpha_\mathrm{trans}}{\alpha_\mathrm{tot}}dt \\
+    dn_\mathrm{ph,cis} &= dn_\mathrm{ph} - dn_\mathrm{trans}.
+
+:math:`\alpha_\mathrm x` denotes here the absorption per length :math:`\varepsilon_\mathrm x c_\mathrm x` with :math:`x=(\mathrm{trans,cis})` and :math:`\alpha_\mathrm{tot}=\alpha_\mathrm{trans} + \alpha_\mathrm{cis}`. After photo excitation of the trans isomer, a certain fraction :math:`\Phi_\mathrm{t-c}` undergoes isomerisation to the cis form while the remainder returns to the ground state of the trans form. Likewise, a cis isomer may undergo a photo-induced cis-trans isomerisation with a quantum yield of :math:`\Phi_\mathrm{c-t}`.
+The total balance of molecules in trans form is therefore given by
+
+.. math::
+
+   \dot n_{trans}
+   = N_\mathrm A V\cdot \dot c_\mathrm{trans}
+   = -\Phi_\mathrm{t-c}\dot n_\mathrm{ph,trans}
+     +\Phi_\mathrm{c-t}\dot n_\mathrm{ph,cis}
+     + N_\mathrm A V\cdot k_\mathrm{cis-trans}c_\mathrm{cis}
+
+where :math:`k_\mathrm{cis-trans}` is the rate of the thermally activated back reaction, :math:`N_\mathrm A` Avogadro's constant and :math:`V` the total sample volume, illuminated and non illuminated. In terms of the concentration of trans isomer this reads
+
+.. math::
+
+   \dot c_\mathrm{trans}
+   = \frac{I_0}{h\nu N_\mathrm AV}
+     \left[1 - 10^{-\alpha_\mathrm{tot}L}\right]
+     \frac{- \Phi_\mathrm{t-c}\alpha_\mathrm{trans}
+           + \Phi_\mathrm{c-t}\alpha_\mathrm{cis}}
+          {\alpha_\mathrm{tot}}
+     + k_\mathrm{cis-trans}c_\mathrm{cis}
+
+This equation has to be solved numerically. The concentration of the cis isomer is then simply given by the balance
+
+.. math::
+   c_\mathrm{cis} = c_\mathrm{tot} - c_\mathrm{trans}.
+
+Using the values
+
+.. csv-table::
+   :align: center
+
+   ":math:`\varepsilon_\mathrm{trans}`", "23000 M :math:`^{-1}` cm :math:`^{-1}`"
+   ":math:`\varepsilon_\mathrm{cis}`",   "1000 M :math:`^{-1}` cm :math:`^{-1}`"
+   ":math:`\Phi_\mathrm{t-c}`",          "0.5"
+   ":math:`\Phi_\mathrm{c-t}`",          "0.3"
+   ":math:`k_\mathrm{cis-trans}`",       ":math:`10^{-6}`/s"
+   "excitation wavelength, :math:`h\nu`","325 nm, :math:`6.22\cdot10^{-19}` J"
+   "power of excitation light",          "40 µW"
+   ":math:`L`",                          "1 cm"
+   ":math:`V`",                          "2 ml"
+   ":math:`c_\mathrm{trans}(t=0)`",      "10 µmol/l"
+
+the simulation of the kinetics gives the following result
+
+.. image:: kinetics.png
+
+We realise that the back reaction in the dark does not influence the speed of the light-induced forward reaction. the following graphic shows the corresponding absorption spectra with a stepping of 10 seconds.
+
+.. figure:: absorption-reaction.png
+   :align: center
+
+   Absorption of 10 µmol/l of azobenzene in methanol when exposed to
+   light of a wavelength of 325 nm. 
+
+Adapting the simulation in the PyMoDAQ controller
+-------------------------------------------------
+
+
+Timing introduced into the controller
+-------------------------------------
+
+
+Improved experimental procedure
+-------------------------------
+
+If you've got the possibility to perform the experiment in a real lab, you'll notice that the observed kinetics are quite faster than what the simulation tells. Why is that? Simply because the whitelight used for recording the absorption drives the photo-induced isomerisation as well. To avoid this problem, the exposure of the sample to probe light has to be minimised. However, simply lowering its intensity does not help much because the signal-to-noise ratio of the obtained absorption spectrum degrades with diminished light intensity. It is better to i) insert a shutter between lamp and sample which is open only during absorption measurements and ii) to adapt the measurement sequence to shape of the kinetics. The concentrations change rapidly at short times and slow down as time goes on. At later times it is sufficient to record spectra only now and then. In other words, the time grid for recording absorption spectra should have a logarithmic spacing. More precisely and since the recording time is not infinitely short, the measurement sequence should start with linearly spaced time steps until a certain limit and then continue logarithmically.
+
+
+Improved experimental set-up
 ----------------------------
-
-In this chapter we're extending the experiment to monitor a photo-isomerisation reaction. Let's take azobenzen as an example. When left long enough in the dark, all molecules will be in their trans form. Upon illumination with blue light, a fraction undergoes an isomerisation to the cis form. The cis to trans back-reaction is thermally activated with a rate of roughly :math:`10^{-6}`/s at room temperature. The rate of the trans to cis isomerisation is proporiobnal to the intensity of the excitation light. However, due to the absorption of the sample, the intensity decreases along the optical path. The number of photons absorbed by the sample in unit time is given by
-
-.. math::
-
-   n_\mathrm{trans}
-   &= \frac{I_0}{h\nu}
-      \left[1 - 10^{-\left\alpha_\mathrm{tot}L}\right]
-      \frac{\alpha_\mathrm{trans}}{\alpha_\mathrm{tot}} \\
-   n_\mathrm{cis}
-   &= \frac{I_0}{h\nu}
-      \left[1 - 10^{-\left\alpha_\mathrm{tot}L}\right]
-      \frac{\alpha_\mathrm{cis}}{\alpha_\mathrm{tot}} \\
-
-where :math:`I_0` is the incident intensity of excitation light, :math:`h\nu` the energy per photon and :math:`\alpha_\mathrm x` denotes the absorption per length :math:`\varepsilon_\mathrm x c_\mathrm x` with :math:`x=[\mathrm{trans,cis}]` and :math:`\alpha_\mathrm{tot}=\alpha_\mathrm{trans} + \alpha_\mathrm{cis}`
-
-Let us abbreviate the absorption per length :math:`\alpha:=\varepsilon c`. The number of 
-The cycle of the reaction can be descibed by a set of coupled ordinary dirrerential equations in the two concentrations
-
-.. math::
-   :label: rates
-
-   \dot c_\mathrm{trans}(t)
-   &= - k_\mathrm{iso}(t)c_\mathrm{trans}(t)
-      + k_\mathrm{back}c_\mathrm{cis}(t) \\
-   \dot c_\mathrm{cis}(t)
-   &= k_\mathrm{iso}(t)c_\mathrm{trans}(t)
-      - k_\mathrm{back}c_\mathrm{cis}(t).
-
-The isomerisation rate :math:`k_\mathrm{iso}(t)` depends on the light intensity and, through the sample absorption at the wavelength of the excitation light, also on the concentrations of the trans and cis isomers, :math:`c_\mathrm{trans}(t)` and :math:`c_\mathrm{cis}(t)`, respectively. The back-reaction rate, :math:`k_\mathrm{back}`, on the other hand, is truly a constant.
-
-The reaction can be monitored by recording the absorption spectrum as a function of time while irradiating the sample whith exitation light. A very simple approach is to combine the two arrangements used so far, illuminating the sample with both excitation and probe light at the same time and record a sequence of absorption spectra. We'll use this approach as starting point and discuss the drawbacks and their improvements later.
-
-Light passing through an absorbing sample is attenuated according to Beer-Lambert's law
-
-.. math::
-   I(l) =
-   I_0 10^{-(\varepsilon_\mathrm{trans}c_\mathrm{trans}
-            + \varepsilon_\mathrm{cis}c_\mathrm{cis})l}
-
-where :math:`\varepsilon_\mathrm x` are the molar extinction coefficients of the trans and the cis form, respectively, :math:`c_\mathrm x` their concentrations in mol/liters and :math:`l` the length of the optical path in the sample in centimeters.
-
-The amount of incident excitation photons per unit time is given b
-
-.. math::`n_0 = I_0 / h\nu`
-
-where :math:`h\nu` is the excitation photon energy. The amount of photons absorbed in the sample is given by
-
-.. math::
-
-   n_\mathrm{trans}
-   &= \frac{\varepsilon_\mathrm{trans}c_\mathrm{trans}}
-           {\varepsilon_\mathrm{trans}c_\mathrm{trans}
-            + \varepsilon_\mathrm{cis}c_\mathrm{cis}}
-      n_0\left[1 - 10^{-(\varepsilon_\mathrm{trans}c_\mathrm{trans}
-            + \varepsilon_\mathrm{cis}c_\mathrm{cis})L}\right] \\
-   n_\mathrm{cis} &= A
-     
-
-During a short amount of time :math:`dt` the number of photons absorbed by the sample is (in mol)
-
-.. math::
-   dn = I_0\left[1 - 10^{-\varepsilon c(t)L}\right]dt
-
-The rate of isomerisation is therefore given by
-
-.. math::
-   k_\mathrm{iso}(t) = \Phi_\mathrm{iso}\dot n(t)
-   = I_0\Phi_\mathrm{iso}
-     \left[1 - e^{(\varepsilon_\mathrm{trans}c_\mathrm{trans}
-           + \varepsilon_\mathrm{cis}c_\mathrm{cis})L}\right]\cdot
-     \frac{\varepsilon_\mathrm{trans}c_\mathrm{trans}}
-          {\varepsilon_\mathrm{trans}c_\mathrm{trans}
-           + \varepsilon_\mathrm{cis}c_\mathrm{cis}}
-      
-where :math:`\Phi_\mathrm{iso}` is the quantum yield of isomerisation. The last term on the right hand side takes care of the fact that only part of the total absorption is due to molecules in the trans form. Since equations :eq:`rates` are nonlinear rate equations and form a closed loop they have to be solved numerically using an ODE solver.
-
-
-
-
-A slightly more advanced measurement procedure involves switching off the excitation laser while measuring the absorption to avoid disturbing the spectrum by scattered excitation light, and switching off the probe light while not recording the absoption to avoid photo-isomerisation induced by probe light. As a further improvement we'll implement a way to take drifts of the probe light into account.
 
 The following sketch shows the extension of the previously used arrangement. Using two Y-fibres, the whitelight light from the lamp can be monitored without changing the cuvette.
 
 .. image:: sketch-photochem.png
 
-This permits to correct for drifts of the lamp spectrum over the course of the experiment. However, it doesn't permit to automatically take a reference of the lamp spectrum :math:`R` beacuse the two beam paths are not identical. :math:`R` has still to be recorded by manually insterting a pure sample solvent. :math:`I_0`, the incident intensity monitored through the additional beam path, has to be recorded previous to the experiment as well. During the experiment and when needed, the shutters can then be switched such that :math:`I`, the incident intensity during the experiment, can be re-measured. Without drifts one should have :math:`I_0=I`. The absorption is then obtained from
+This permits to correct for drifts of the lamp spectrum over the course of the experiment. However, it doesn't permit to automatically take a reference of the lamp spectrum :math:`R` bevause the two beam paths are not identical. :math:`R` has still to be recorded by manually insterting a pure sample solvent at the begin of the experiment. :math:`I_0`, the incident intensity monitored through the additional beam path, has to be recorded previous to the experiment as well. During the experiment and when needed, the shutters can be switched such that :math:`I`, the incident intensity during the experiment, can be re-measured. Without drifts one should have :math:`I_0=I`. The corrected absorption is then given by
 
 .. math::
-   A(\lambda) = -\log_{10}\left(\frac SI\cdot\frac{I_0}R\right)
+   A(\lambda) = -\log_{10}\left(\frac SI\cdot\frac{I_0}R\right).
 
-Note that when dealing with absorption in optical density, the `decadic` molar extinction coefficient is typically used 
-
-.. math::
-   I(l) = I_0 10^{-\varepsilon_{10}cl} \qquad
-   A(l) = -\log_{10} \left(\frac I{I_0}\right) = \varepsilon_{10}cl
-
-We use the natural one :math:`\varepsilon=\varepsilon_{10}\log(10)` in this document so that the factor :math:`\log(10)` cluttering-up the equations can be dropped.
+The idea is to introduce a parameter defining the time span after which the loop recording absorption spectra has to be temporally left to record a renewed lamp spectum. Of course, we could implement all this into the controller since the only 'feedback' needed here is the time stamp from the recorded spectrum which tells when renewing the lamp spectrum is due. However, any other 'decision maker' would be hard to implement within the controller without breaking PyMoDAQ's modular design. A simple exchange of the spectro-photometer from Model XYZ to model :math:`\alpha\beta\gamma` would ask for re-implementing all the same in the corresponding controller. Certainly, a Python mixin could ease that. However, it would still introduce modularity at other places than forseen by PyMoDAQ. It is time to address the sequencer.

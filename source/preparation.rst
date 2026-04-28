@@ -97,8 +97,6 @@ This tells the python installer to incorporate the module under development into
 
 When we fire up the dashbord now and start the experiment manager, a new item 'DAQ0D/Template' should appear in the Detectors-Add drop-down list.
 
-.. image:: preset-tutorial.png
-	   
 A few words on the virtual environments may be worth mentioning here.
 
 * A commen problem in Linux environments is that python comes already with the system installation and is used for various tasks. However, no environments are set up by default. This may screw up things when python packages are installed as superuser but not using the system's package manager (like apt for Debian). The latter and the work of the distribution maintainers take care of version issues. However, when using :code:`sudo pip install ...` you are on your own. Even worse, you may already have done so in the past without being aware of possible problems. They will probably hit you now.
@@ -106,3 +104,29 @@ A few words on the virtual environments may be worth mentioning here.
   Therefore, use :code:`pip` only in virtual environments. Outside, use the system's package manager instead!
 
 * PyCharm seems to have some difficulties in coping with already existing environments. After setting everything according to the instructions on the JetBrains website, the prompt in the terminal may show that instead of the chosen environment, PyCharm has actually activated the base environment. Supposedly missing packages are a good indication that this happened. Creating new environments from inside PyCharm seems to work more reliably.
+
+
+Temporarily necessary: get the development branch
+---------------------------------------------
+
+For the time being, the tutorial is based on the development branch of PyMoDAQ because of a couple of new features which are needed for the more advanced chapters. To base yourself on that version do the following:
+
+.. code-block::
+
+   $ python3 -m venv /path/to/your/environments/tut
+   $ source /path/to/your/environments/tut/bin/activate
+   $ pip install pymodaq pyqt6
+   $ cd /path/to/your/pymodaq/projects
+   $ git clone -b dev git@github.com:/PyMoDAQ/pymodaq.git pymodaq-dev
+   $ cd pymodaq-dev
+   $ python install-packages.py
+
+Whenever activating this environment, you will be working with the development branch. Be aware that certain things may change rapidly therein which may introduce conflicts. However, as soon as this branch is turned into the next official release, the tutorial will stay on that release and not be based on development things any more. Forseen horizont: autum 26.
+
+Should you plan to contribute to the development by signalling conflicts to the coding crew, a slightly different route has to be taken. First make a fork of PyMoDAQ's dev branch on your github account and then clone from that fork
+
+.. code-block::
+
+   $ git clone -b dev git@github.com:/your-github-id/pymodaq.git pymodaq-dev
+
+You have to make sure that all branches are copied while forking. There's a checkbox on github controlling that feature.
