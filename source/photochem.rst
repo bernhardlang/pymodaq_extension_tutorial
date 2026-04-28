@@ -4,7 +4,23 @@ Watching a photochemical reaction
 Description and simulation of the experiment
 ----------------------------
 
-In this chapter we're extending the experiment to monitor a photo-isomerisation reaction. You may think about molecules like azobenzen or stilbene or similar. When left long enough in the dark, all molecules will be in their trans form. Upon illumination with blue light, a certain fraction undergoes an isomerisation to the cis form. The cis to trans back-reaction is thermally activated. The cycle of the reaction can be descibed by a set of coupled ordinary dirrerential equations in the two concentrations
+In this chapter we're extending the experiment to monitor a photo-isomerisation reaction. Let's take azobenzen as an example. When left long enough in the dark, all molecules will be in their trans form. Upon illumination with blue light, a fraction undergoes an isomerisation to the cis form. The cis to trans back-reaction is thermally activated with a rate of roughly :math:`10^{-6}`/s at room temperature. The rate of the trans to cis isomerisation is proporiobnal to the intensity of the excitation light. However, due to the absorption of the sample, the intensity decreases along the optical path. The number of photons absorbed by the sample in unit time is given by
+
+.. math::
+
+   n_\mathrm{trans}
+   &= \frac{I_0}{h\nu}
+      \left[1 - 10^{-\left\alpha_\mathrm{tot}L}\right]
+      \frac{\alpha_\mathrm{trans}}{\alpha_\mathrm{tot}} \\
+   n_\mathrm{cis}
+   &= \frac{I_0}{h\nu}
+      \left[1 - 10^{-\left\alpha_\mathrm{tot}L}\right]
+      \frac{\alpha_\mathrm{cis}}{\alpha_\mathrm{tot}} \\
+
+where :math:`I_0` is the incident intensity of excitation light, :math:`h\nu` the energy per photon and :math:`\alpha_\mathrm x` denotes the absorption per length :math:`\varepsilon_\mathrm x c_\mathrm x` with :math:`x=[\mathrm{trans,cis}]` and :math:`\alpha_\mathrm{tot}=\alpha_\mathrm{trans} + \alpha_\mathrm{cis}`
+
+Let us abbreviate the absorption per length :math:`\alpha:=\varepsilon c`. The number of 
+The cycle of the reaction can be descibed by a set of coupled ordinary dirrerential equations in the two concentrations
 
 .. math::
    :label: rates
@@ -23,33 +39,46 @@ The reaction can be monitored by recording the absorption spectrum as a function
 Light passing through an absorbing sample is attenuated according to Beer-Lambert's law
 
 .. math::
-   I(l) = I_0 e^{-\varepsilon cl}
-
-where :math:`\varepsilon` is the molar extinction coefficient of the absorbing species, :math:`c` its concentration in mol/liters and :math:`l` the length of the optical path in the sample in centimeters. The intensity of the excitation light as a function of optical path length in the sample solution is therefore given by
-
-.. math::
    I(l) =
-   I_0 e^{-(\varepsilon_\mathrm{trans}c_\mathrm{trans}
+   I_0 10^{-(\varepsilon_\mathrm{trans}c_\mathrm{trans}
             + \varepsilon_\mathrm{cis}c_\mathrm{cis})l}
 
+where :math:`\varepsilon_\mathrm x` are the molar extinction coefficients of the trans and the cis form, respectively, :math:`c_\mathrm x` their concentrations in mol/liters and :math:`l` the length of the optical path in the sample in centimeters.
 
-During a short amount of time :math:`dt` the number of photons absorbed by the sample is
+The amount of incident excitation photons per unit time is given b
+
+.. math::`n_0 = I_0 / h\nu`
+
+where :math:`h\nu` is the excitation photon energy. The amount of photons absorbed in the sample is given by
 
 .. math::
-   dn = \frac{I_0}{h\nu}\left[1 - e^{\varepsilon c(t)L}\right]dt
 
-where :math:`h\nu` is the energy of an excitation photon. The rate of isomerisation is therefore given by
+   n_\mathrm{trans}
+   &= \frac{\varepsilon_\mathrm{trans}c_\mathrm{trans}}
+           {\varepsilon_\mathrm{trans}c_\mathrm{trans}
+            + \varepsilon_\mathrm{cis}c_\mathrm{cis}}
+      n_0\left[1 - 10^{-(\varepsilon_\mathrm{trans}c_\mathrm{trans}
+            + \varepsilon_\mathrm{cis}c_\mathrm{cis})L}\right] \\
+   n_\mathrm{cis} &= A
+     
+
+During a short amount of time :math:`dt` the number of photons absorbed by the sample is (in mol)
 
 .. math::
-   k_\mathrm{iso}(t) = \Phi_\mathrm{iso}\dot n(t)\frac V{N_\mathrm A}
-   = \frac{I_0V\Phi_\mathrm{iso}}{h\nu N_\mathrm A}
+   dn = I_0\left[1 - 10^{-\varepsilon c(t)L}\right]dt
+
+The rate of isomerisation is therefore given by
+
+.. math::
+   k_\mathrm{iso}(t) = \Phi_\mathrm{iso}\dot n(t)
+   = I_0\Phi_\mathrm{iso}
      \left[1 - e^{(\varepsilon_\mathrm{trans}c_\mathrm{trans}
            + \varepsilon_\mathrm{cis}c_\mathrm{cis})L}\right]\cdot
      \frac{\varepsilon_\mathrm{trans}c_\mathrm{trans}}
           {\varepsilon_\mathrm{trans}c_\mathrm{trans}
            + \varepsilon_\mathrm{cis}c_\mathrm{cis}}
       
-where :math:`\Phi_\mathrm{iso}` is the quantum yield of isomerisation, :math:`N_\mathrm A` Avogadro's constant and :math:`V` the illuminated sample volume. The last term on the right hand side takes care of the fact that only part of the total absorption is due to molecules in the trans form. Since equations :eq:`rates` are nonlinear rate equations and form a closed loop they have to be solved numerically using an ODE solver.
+where :math:`\Phi_\mathrm{iso}` is the quantum yield of isomerisation. The last term on the right hand side takes care of the fact that only part of the total absorption is due to molecules in the trans form. Since equations :eq:`rates` are nonlinear rate equations and form a closed loop they have to be solved numerically using an ODE solver.
 
 
 
