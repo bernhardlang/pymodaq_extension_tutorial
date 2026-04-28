@@ -71,15 +71,15 @@ Preparing the environment
 
 As a last step before diving into coding we have to set up a virtual environment which we are going to use during the development of our plugin. Due to the fast evolution of Python packages, keeping track of compatible versions is quite an important issue. Virtual environments are used as containers which isolate parallel installations using different and potentially incompatible versions of packages. In the past, conda was used by the PyMoDAQ community. Licence issues have changed that. Until things have settled, the Python-onboard package venv can be used::
 
-  $ python3 -m venv /path/to/environment
-  $ source /path/to/environment/bin/activate
+  $ python3 -m venv /path/to/your/environments/tut
+  $ source /path/to/your/environments/tut/bin/activate
   $ pip install pymodaq pyqt6
 
 As path you should choose a sensible name for your project. The subfolders created in the environment folder contain links to the python interpreter to be used and will receive all packages installed by pip once the environment is activated. Some prefer to have a separate evironment for each package / plugin to be developped. Different environments are needed at least when working with different versions of some packages in parallel. But don't worry, new environments can always be set up later in case that incompatibilites come up. 
 
 The activation will add the environment's bin directory to the head of the current search path so that the binaries therein will be found before any others with the same name. If you wish to use a specific pythom version, say 3.12, call::
 
-  $ python3.12 -m venv /path/to/environment
+  $ python3.12 -m venv /path/to/your/environments/tut
 
 That version must of course have been previously installed on your computer. After the activation, don't worry when Python complains about missing packages which you know are being already present on your system. Placing the python interpreter into an environment actually makes it looking like a pristine installation of the bare interpreter without any additional packages.
 
@@ -113,13 +113,14 @@ For the time being, the tutorial is based on the development branch of PyMoDAQ b
 
 .. code-block::
 
-   $ python3 -m venv /path/to/your/environments/tut
-   $ source /path/to/your/environments/tut/bin/activate
-   $ pip install pymodaq pyqt6
-   $ cd /path/to/your/pymodaq/projects
-   $ git clone -b dev git@github.com:/PyMoDAQ/pymodaq.git pymodaq-dev
-   $ cd pymodaq-dev
-   $ python install-packages.py
+   $ source /path/to/your/environment/tut/bin/activate
+   (tut) $ cd /path/to/your/pymodaq/projects
+   (tut) $ git clone -b dev git@github.com:/PyMoDAQ/pymodaq.git pymodaq-dev
+   ...
+   cloning into pymodaq-dev
+   ...
+   (tut) $ cd pymodaq-dev
+   (tut) $ python install-packages.py
 
 Whenever activating this environment, you will be working with the development branch. Be aware that certain things may change rapidly therein which may introduce conflicts. However, as soon as this branch is turned into the next official release, the tutorial will stay on that release and not be based on development things any more. Forseen horizont: autum 26.
 
