@@ -7,6 +7,8 @@ In this section we will write the code for controlling a spectro-photometer. Let
 * Suppose that the experiment has a surprising result. Being able not only to simulate some default values but the outcome of an entire experiment while using the whole chain from the simulated device over PyMoDAQ's functionality to data treatment software may be a very helpful quality control. Is the result surprising because a mistake happended during the experiment? during data acquision? during treatment? *or did we actually discover something new??*
 * You may learn a lot about your experiment and its instrumentation by making sure that at the tail of the chain you are actually getting back exactly what you have put into the simulation at its head. Remember that the only way a sample can talk to you in a spectroscopic experiment is by means of signal photons it emits. These and the carried information pass by a multitude of optical elements, detectors, ADC converters, data treatment of all sorts etc. Quite some Chinese whispers to master.
 
+To understand the spectroscopic peculiarities behind the code in this section, one has to dive into the detection of visible light to quite some extent. For those who don't want to spend time on these details, you may just check out the code from the tag :code:`to be filled in` and skip this section until :ref:`here <controller-ready>`, where the checked out code should readily reproduce the figures shown below. Just keep in mind as an advice, once you've got a draft code of the experiment you want to control, it is probably still a good idea to simulate that experiment, instead of the one presented here where the details don't matter to you.
+
 We start with a controller situated in the hardware directory of the plugin (:file:`src/pymodaq_plugins_tutorial_extensions/hardware`). When using real hardware, an instance of the controller is managing the communication with the device. We use the same structure here because a couple of simulated instruments will have to work together, sharing common "knowledge" about the state of the simulated experiment. We use here a :code:`dataclass` to avoid quite some boiler plate code at initialisation.
 
 .. code-block:: python
@@ -153,6 +155,8 @@ where :math:`A(\lambda)` is the absorption measured as optical density, :math:`I
 	plt.plot(data - dark)
 	plt.legend(['raw through sample', 'dark subtracted'])
 	plt.show()
+
+.. _controller-ready:
 
 The resulting spectra should look like follows
 
