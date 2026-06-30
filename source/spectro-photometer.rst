@@ -73,7 +73,7 @@ The initialisation of these parameters is done in the controller in the present 
         if param.name() in self.parameter_names:
             setattr(self.controller, param.name(), param.value())
 
-Changed parameter values can be directly handed over to the controller. There's no need for any manipulation on our simulated device.
+Changed parameter values can directly be handed over to the controller. There's no need for any manipulation on our simulated device.
 
 The initialisation of the controller has to respect a speciality of PyMoDAQ. Any plugin can be either a master which owns a controller instance or a slave which shares the controller with another plugin with master role.
 
@@ -107,10 +107,9 @@ The initialisation of the controller has to respect a speciality of PyMoDAQ. Any
 
     def close(self):
         """Terminate the communication protocol"""
+        pass
 
-        initialized = False
-
-For sake of simplicity we assume here that the controller has a wavelength property. In case we're programming the controller ourselves we can make sure that such property is indeed present. Should the controller be provided by the device's supplier, one may either add the property by modifying the code or use here whatever means the controller provides to obtain the spectrometer's wavelength or energy axis. We may also opt to export the wavelength axis together with the recorded data. **@PyMoDAQxperts:** could this be an issue for performance when the rate of incoming data is high?
+For sake of simplicity we assume here that the controller has a property called wavelength, being a 1D numpy array with a wavelength value per pixel. In case we're programming the controller ourselves we can make sure that such property is indeed present. Should the controller be provided by the device's supplier, one may either add the property by modifying the supplied code or use here whatever means the controller provides to obtain the spectrometer's wavelength or energy axis. We may also opt to export the wavelength axis together with the recorded data. That basically depends on whether the wavelength or energy scale can be changed.
 
 Obtaining the simulated spectroscopic data is a matter of calling the corresponding method on the controller.
 That data is wrapped in :code:`DataFromPlugins` and :code:`DataToExport` so that the viewer object can determine what to do with and how to display it.
@@ -148,11 +147,14 @@ That data is wrapped in :code:`DataFromPlugins` and :code:`DataToExport` so that
 The method needs a counter part in the controller
 
 .. code-block::
+   :emphasize-lines: 4,7-
 
     class MockSpectrograph:
-
     ...
-
+        def __post_init__(self):
+            self.with_sample = True
+            self.calculate_base_data()
+    ...
 	def grab_spectrum(self):
 	    time.sleep(max(self.integration_time * 1e-6, 0.001))
 	    return self.simulate_spectrum(True, self.with_sample)
@@ -167,4 +169,6 @@ A bare plugin window should open
 
 .. image:: plugin-test.png
 
-and should display simulated data when pressing the grab button (the fourth to the right of the combobox in the second tool bar). 
+and should display simulated data when pressing the grab button (the left-right arrows in the tool bar). 
+
+:code:`tag spectro-plugin`

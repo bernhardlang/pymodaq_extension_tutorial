@@ -1,7 +1,7 @@
 Shutter plugin
 ==============
 
-The shutter used in this experiment is a low-cost device based on a pulse-width modulation (PWM) driven servo for modeling which is controlled by an arduino board. An anodised blade fixed to the servo's steerer blocks the light beam when placed accordingly
+The shutter used in this experiment is a low-cost device based on a pulse-width modulation (PWM) driven servo for modeling which is controlled by an Arduino board. An anodised blade fixed to the servo's steerer blocks the light beam when placed accordingly
 
 .. image:: Servo-motor-circuit.png
 
@@ -9,7 +9,7 @@ The position is steered by the duty cycle of a pulsed signal, typically with a p
 
 .. image:: Servomotor_Timing_Diagram.svg.png
 
-The only thing which matters in the context of this tutorial is that the corresponding actuator plugin has to move the (here simulated) servo back and forth between two positions for shutter closed and shutter opened, respectively. In the controller file we implement a generic :code:`MocActuator` which is specialised as needed.
+The only thing which matters in the context of this tutorial is that the corresponding actuator plugin has to move the (here simulated) servo back and forth between two positions for shutter closed and shutter opened, respectively. In the controller file we implement a generic :code:`MockActuator` which is specialised as needed.
 
 .. code-block::
 
@@ -39,33 +39,30 @@ The only thing which matters in the context of this tutorial is that the corresp
 	def is_closed(self):
 	    return abs(self._current_value - self.closed_value) <= self.epsilon
 
-At present, we need only a single shutter. More devices will follow later on. The simulation has to know whether the sample cuvette contains the real sample or solvent only. This is taken care of by the flag :code:`with_sample`.
+At present, we need only a single shutter. More devices will follow later on. The simulation has to know whether the sample cuvette contains the real sample or solvent only. This is taken care of by the flag :code:`with_sample` which we had already introduced in the previous chapter.
 
 .. code-block::
    :emphasize-lines: 6,10-
 
     @dataclass
     class MockSpectrograph:
-
         ...
 	absorption: float = 0.3
 	shutter_names = ['dark']
 
         def __post_init__(self):
-	    self.calculate_base_data()
 	    self.with_sample = True
+	    self.calculate_base_data()
 	    self.shutter = { name: MockShutter(1200)
 	                     for name in self.shutter_names }
 
 When recording a spectrum, the state of the shutter has to be taken into account, as well as the nature of the sample. This is the reason why the shutter plugin has to be declared as a slave sharing the spectrometer's controller. In a real experiment these two plugins would operate independently of each other.
 			  
 .. code-block::
-   :emphasize-lines: 7,8,10-
+   :emphasize-lines: 5,6,8-
 
     class MockSpectrograph:
-
     ...
-
 	def grab_spectrum(self):
 	    time.sleep(max(self.integration_time * 1e-6, 0.001))
 	    return self.simulate_spectrum(self.get_shutter_value('dark') > 0,
@@ -87,6 +84,10 @@ Rename the class and pay attention to the naming convention. The preamble of the
 
 .. code-block::
 
+    ...
+    from pymodaq_plugins_tutorial_extension.hardware.controller import \
+        MockSpectrograph
+
     class DAQ_Move_MockShutter(DAQ_Move_base):
 
         is_multiaxes = True
@@ -98,7 +99,7 @@ Rename the class and pay attention to the naming convention. The preamble of the
 	params = [
 	  {'title': 'Closed position', 'name': 'closed', 'type': 'int',
 	   'min': 500, 'max': 2100, 'value': 1200 },
-	  {'title': 'Open position', 'open', 'type': 'int',
+	  {'title': 'Open position', 'name': 'open', 'type': 'int',
 	   'min': 500, 'max': 2100, 'value': 1800 },
 	] + comon_parameters_fun(is_multiaxes, _axis_names, epsilon=_epsilon)
 
@@ -110,9 +111,7 @@ The initialisation procedure is similar to the one of a detector plugin.
 .. code-block::
 
     class DAQ_Move_MockShutter(DAQ_Move_base):
-
         ...
-
         def ini_stage(self, controller=None):
 	    if self.is_master:
 		self.controller = MockSpectrograph()
@@ -130,24 +129,20 @@ We could make ourselves life easier here by just passing on values to the contro
 .. code-block::
 
     class DAQ_Move_MockShutter(DAQ_Move_base):
-
         ...
-
 	def commit_settings(self, param: Parameter):
 	    axis = self.settings['multiaxes', 'axis']
 	    if param.name() == 'closed':
-	        if self.controller.set_closed_value('axis', param.value())
+	        self.controller.set_closed_value('axis', param.value())
 	    elif param.name() == 'open':
-	        if self.controller.set_open_value('axis', param.value())
+	        self.controller.set_open_value('axis', param.value())
 
 Finally, the methods for getting and setting the actuator's value, once again and for the same reason boiler-plate code only.
 
 .. code-block::
 
     class DAQ_Move_MockShutter(DAQ_Move_base):
-
         ...
-
 	def get_actuator_value(self):
 	    axis = self.settings['multiaxes', 'axis']
 	    pos = DataActuator(data=self.controller.get_shutter_value(axis),
@@ -178,3 +173,14 @@ Finally, the methods for getting and setting the actuator's value, once again an
 
     if __name__ == '__main__':
 	main(__file__)
+
+
+When running the plugin code from the command line::
+
+  $ python daq_move_MockShutter.py
+
+an actuator window should open which looks like follows (potentially after a manual resize)
+
+.. image:: actuator.png
+
+:code:`tag shutter-plugin`
