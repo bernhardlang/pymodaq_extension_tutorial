@@ -1,7 +1,7 @@
 Playing with the devices in the dashboard
 =========================================
 
-To let the simulated spectrometer and shutter act together we have to join them in a dashboard experiment. Start the dashboard, open the experiment manager and click the icon for generating a new experiment. Name it 'absorption' and add an actuator of type MockShutter and a detector of type MockSpectro. Your experiment definition should now look like
+To let the simulated spectrometer and shutter act together we have to join them in an experiment. Start the dashboard, open the experiment manager and click the icon for generating a new experiment. Name it 'absorption' and add an actuator of type MockShutter and a detector of type MockSpectro. Your experiment definition should now look like
 
 .. image:: preset-manager.png
 
