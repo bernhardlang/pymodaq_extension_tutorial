@@ -1,7 +1,7 @@
 Preparing the stage
 ===================
 
-This section is devoted to a recap on how to set up the module's folder structure.
+This section is devoted to a recap on how to set up the module's folder structure and Python's virtual environment.
 
 Used tools
 ----------
@@ -18,7 +18,7 @@ A couple of tools will be used in this tutorial. To avoid cluttering-up the text
 Setting up the Python module skeleton
 -------------------------------------
 
-To get a starting point four our code we are cloning the plugin template repository on github. Note that the route taken here does not build a fork of an existing repository. We're going to develop something new, right?::
+To get a starting point for our code we are cloning the plugin template repository on github. Note that the route taken here does not build a fork of an existing repository. We're going to develop something new, right?::
 
   $ cd /path/to/extension-plugin-code
 
@@ -35,14 +35,14 @@ We'll call the project :code:`tutorial_extension` and give the repository the co
 
 We're not going to need the templates for 0D and 2D viewer plugins, neither for custom applications and models. Let's delete the corresponding template files because they would show up in the dashboard's plugin list. However, don't delete the folders and the :file:`__init__.py` files in there because at some later point you may want to add real plugins there. The now deleted template code can easily be retrieved from github in case.
 
-Being a git clone of the :code:`pymodaq_plugins_template` repository, it still is linked to the history of that template module which is probably not what we want. It is better to make a fresh start by deleting git's repository folder and re-initialising git::
+Being a git clone of the :code:`pymodaq_plugins_template` repository, it still is linked to the history of that template module which is probably not what you want. It is better to make a fresh start by deleting git's repository folder and re-initialising git::
 
   $ rm -rf .git
   $ git init
   $ git add -A
   $ git commit -m "initial repository commit"
 
-If you plan to develop multiple plugins, you may also tar or zip the project folder right after having deleted the :file:`.git` folder and keep the material aside for re-use later on.
+If you plan to develop multiple plugins, you may also tar or zip the project folder right after having deleted the :file:`.git` folder or download the sources from github as a zip file and keep the material aside for re-use later on.
 
 My preferred code editor (being a keyboard player) makes backup copies of changed files by appending a tilde to the file name. I therefore add the line
 
@@ -60,16 +60,16 @@ Let's inspect the root folder::
 A couple of files in there should be modified.
 
 * :file:`LICENSE`: You may want to add your name to the Copyright (c) statement.
-* :file:`pyproject.toml`: Here goes main information for the installation procedure. The code is pretty self-explaining. Just fill in the blanks. The package-url depends on whether you want to host your package on your own repository or you plan to get it hosted on the PyMoDAQ repository. Don't worry too much about it at this time. It is a good idea to delete the comments telling what to do once you did it. We'll leave the features as they are for the moment, announcing only instruments, because that is what we are going to do as a first step. The extension comes later.
+* :file:`pyproject.toml`: Here goes main information for the installation procedure. The code is pretty self-explaining. Just fill in the blanks. The package-url depends on whether you want to host your package on your own repository or you plan to get it hosted on the PyMoDAQ repository. Don't worry too much about it at this time. It is a good idea to delete the comments telling what to do once you did it. We'll leave the features as they are for the moment, announcing only instruments, because that is what we are going to do as a first step. The extension comes later. Fill in sensible information in the project section until the comment :code:`nottodo`. Make sure that the PyMoDAQ version is set to at least 5.2 because this tutorial covers features which were not present in earlier versions.
 * :file:`README.rst`: This file is intended to give the user of your plugin the necessary information to install and to run it. Have a look into other plugin repositories to get an idea of what is typically provided here and how.
 
-That's it already for the root folder and the book-keeping matter in there.
+That's it for the root folder and the book-keeping matter in there.
 
 
 Preparing the environment
 .........................
 
-As a last step before diving into coding we have to set up a virtual environment which we are going to use during the development of our plugin. Due to the fast evolution of Python packages, keeping track of compatible versions is quite an important issue. Virtual environments are used as containers which isolate parallel installations using different and potentially incompatible versions of packages. In the past, conda was used by the PyMoDAQ community. Licence issues have changed that. Until things have settled, the Python-onboard package venv can be used::
+As a last step before diving into coding we have to set up a virtual environment which we are going to use during the development of our plugin. Due to the fast evolution of Python packages, keeping track of compatible versions is quite an important issue. Virtual environments are used as containers which isolate parallel installations using different and potentially incompatible versions of packages. In the past, conda was used by the PyMoDAQ community. Licence issues have changed that. On Linux systems python typically is already there out of the box and the Python-onboard package venv can be used::
 
   $ python3 -m venv /path/to/your/environments/tut
   $ source /path/to/your/environments/tut/bin/activate
@@ -85,49 +85,57 @@ That version must of course have been previously installed on your computer. Aft
 
 To try whether things work as supposed, let's start the dashboard::
 
-  $ python -m pymodaq.dashboard
+  $ dashboard
 
 The dashboard should start up. However, in the experiment manager, no new plugins are visible. That is all right because we haven't installed the plugin module yet. This has to happen in the so-called editable mode. To this end, change to the root directory of your plugin, where e.g. the file :file:`pyproject.toml` is to be found and type::
 
   $ pip install -e .
 
-This tells the python installer to incorporate the module under development into the local site-packages. Watch out for the dot after the -e. Depending on the version of pip coming with your operating system, it might be necessary to first update pip::
+This tells the python installer to incorporate the module under development into the local site-packages. Watch out for the space-and-dot after the -e. Depending on the version of pip coming with your operating system, it might be necessary to first update pip::
 
   $ python -m pip install pip --upgrade
 
-When we fire up the dashbord now and start the experiment manager, a new item 'DAQ0D/Template' should appear in the Detectors-Add drop-down list.
+When we fire up the dashbord now, start the experiment manager to modify the default experiment, scroll down to the end of the actuator list and click on the 'Add' combobox, a new item 'Plugin/Template' should appear.
+
+.. image:: template-plugin.png
+   :align: center
+
+Similarly, there should be a 'DAQ1D/Plugin/Template'.
 
 A few words on the virtual environments may be worth mentioning here.
 
 * A commen problem in Linux environments is that python comes already with the system installation and is used for various tasks. However, no environments are set up by default. This may screw up things when python packages are installed as superuser but not using the system's package manager (like apt for Debian). The latter and the work of the distribution maintainers take care of version issues. However, when using :code:`sudo pip install ...` you are on your own. Even worse, you may already have done so in the past without being aware of possible problems. They will probably hit you now.
 
-  Therefore, use :code:`pip` only in virtual environments. Outside, use the system's package manager instead!
+Therefore, use :code:`pip` only in virtual environments. Outside, always use the system's package manager instead!
 
-* PyCharm seems to have some difficulties in coping with already existing environments. After setting everything according to the instructions on the JetBrains website, the prompt in the terminal may show that instead of the chosen environment, PyCharm has actually activated the base environment. Supposedly missing packages are a good indication that this happened. Creating new environments from inside PyCharm seems to work more reliably.
+* PyCharm seems to have sometimes difficulties in coping with already existing environments. After setting everything according to the instructions on the JetBrains website, the prompt in the terminal may show that instead of the chosen environment, PyCharm has actually activated the base environment. Supposedly missing packages are a good indication that this happened. Creating new environments from inside PyCharm seems to work more reliably.
 
+At this point it is a good idea to commit what we have changed so far::
 
-Temporarily necessary: get the development branch
----------------------------------------------
+  $ git status
 
-For the time being, the tutorial is based on the development branch of PyMoDAQ because of a couple of new features which are needed for the more advanced chapters. To base yourself on that version do the following:
+  On branch main
+  Changes not staged for commit:
+    (use "git add <file>..." to update what will be committed)
+    (use "git restore <file>..." to discard changes in working directory)
+          modified:   .gitignore
+          modified:   README.rst
+          modified:   pyproject.toml
 
-.. code-block::
+  no changes added to commit (use "git add" and/or "git commit -a")
 
-   $ source /path/to/your/environment/tut/bin/activate
-   (tut) $ cd /path/to/your/pymodaq/projects
-   (tut) $ git clone -b dev git@github.com:/PyMoDAQ/pymodaq.git pymodaq-dev
-   ...
-   cloning into pymodaq-dev
-   ...
-   (tut) $ cd pymodaq-dev
-   (tut) $ python install-packages.py
+  $
 
-Whenever activating this environment, you will be working with the development branch. Be aware that certain things may change rapidly therein which may introduce conflicts. However, as soon as this branch is turned into the next official release, the tutorial will stay on that release and not be based on development things any more. Forseen horizont: autum 26.
+tells you what will be commited when issuing::
 
-Should you plan to contribute to the development by signalling conflicts to the coding crew, a slightly different route has to be taken. First make a fork of PyMoDAQ's dev branch on your github account and then clone from that fork
+  $ git add -u
+  $ git commit -m "preparation"
 
-.. code-block::
+If you want to compare your code with the code provided in the github repository which accompanies this tutorial, make a clone of that repository and check out the tag corresponding to your current stage::
 
-   $ git clone -b dev git@github.com:/your-github-id/pymodaq.git pymodaq-dev
+  $ git clone https://github.com/bernhardlang/pymodaq_extension_tutorial.git
+  $ cd pymodaq_extension_tutorial
+  $ git checkout preparation
 
-You have to make sure that all branches are copied while forking. There's a checkbox on github controlling that feature.
+A hint :code:`tag preparation` on the tag to check out will be placed at every mile stone in this tutorial.
+

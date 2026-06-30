@@ -57,4 +57,4 @@ The code of :code:`take_background` is slightly longer than the version it overl
 
 Launch the dashboard and load the :file:`absorption` experiment. The state manager permits now to create sets of configuration operations. Click on the New item on top of the right panel and enter :file:`background` as name. Upon a right click into the configuration area below select :file:`Add Special Configuation -> Actuator value`. Choose the dark shutter here and set the actuator value to zero. Activate the configuration once to get it saved (that's a bug-like trap!)
 
-In terms of functionality, the program has not changed. Using the the state manager instead of steering the actuators directly just changes the way things are 'wired'. However, together with a state machine, this can be turned into a quite powerful tool to work on complex sequences.
+In terms of functionality, the program has not changed. Using the the state manager instead of steering the actuators directly just changes the way things are 'wired' together. However, used together with a state machine, this can be turned into a quite powerful tool to work on complex sequences.

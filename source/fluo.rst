@@ -1,7 +1,7 @@
 Fluorescence measurements, work in progress
 ===========================================
 
-We add now a laser which may excite the sample. It passes through the sample cuvette at a right angle with respect to the light of the lamp to minimise scattering. Such arrangement be used to measure a fluorescence spectrum. The laser shall be controlled by another binary DAQ_move like the shutter.
+We add now a laser which may excite the sample. It passes through the sample cuvette at a right angle with respect to the path of the whitelight of the lamp to minimise scattering. However, during this experiment, the latter will remain switched off. Such arrangement can be used to measure a fluorescence spectrum. The laser shall be controlled by another binary DAQ_move like the shutter.
 
 .. image:: sketch-emission.png
 

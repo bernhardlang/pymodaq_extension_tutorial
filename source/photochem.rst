@@ -4,15 +4,15 @@ Watching a photochemical reaction, work in progress
 Description and simulation of the experiment
 --------------------------------------------
 
-In this chapter the experiment is extended to be able to monitor a photo-isomerisation reaction. Let's take azobenze as an example. It can exisit in two isomers, in trans and in cis form. The former is thermally more stable.
-
+In this chapter the experiment is extended to be able to monitor a photo-isomerisation reaction. Let's take azobenze as an example. It can exisit in two isomers, in trans and in cis form.
 .. image:: cis-trans.png
    :scale: 15%
    :align: center
 
-When left long enough in the dark, all molecules turn into trans form. Upon illumination with blue light, a fraction undergoes an isomerisation to the cis form. The cis to trans back reaction is thermally activated with a rate of roughly :math:`10^{-6}`/s at room temperature. However, the back reaction can also take place after photo-excitation of the cis form.
+The trans isomer is thermally more stable. Therefore, when left long enough in the dark, all molecules turn into the trans form. Upon illumination with blue light, a fraction undergoes an isomerisation to the cis form. The cis to trans back reaction is thermally activated with a rate of roughly :math:`10^{-6}`/s at room temperature. However, the back reaction can also take place after photo-excitation of the cis form.
 
-The rate of the trans-cis isomerisation is proportional to the intensity of the excitation light. However, due to the absorption of the sample, the intensity decreases along the optical path. And since the absorption changes with the course of the reaction, the overall description of the concentrations takes the form of a nonlinear, ordinary differential equation. The number of photons absorbed in the sample of length :math:`L` in a short time, :math:`dt`, is given by Beer-Lambert's law
+The rate of the trans-cis isomerisation is proportional to the intensity of the excitation light. However, due to the absorption of the sample, the intensity decreases along the optical path. And since the concentration changes during  the course of the reaction, so does the absorption.
+Therefore, the overall description of the concentrations takes the form of a nonlinear, ordinary differential equation. The number of photons absorbed in the sample of length :math:`L` in a short time, :math:`dt`, is given by Beer-Lambert's law
 
 .. math::
 
@@ -110,9 +110,9 @@ The following sketch shows the extension of the previously used arrangement. Usi
 
 .. image:: sketch-photochem.png
 
-This permits to correct for drifts of the lamp spectrum over the course of the experiment. However, it doesn't permit to automatically take a reference of the lamp spectrum :math:`R` bevause the two beam paths are not identical. :math:`R` has still to be recorded by manually insterting a pure sample solvent at the begin of the experiment. :math:`I_0`, the incident intensity monitored through the additional beam path, has to be recorded previous to the experiment as well. During the experiment and when needed, the shutters can be switched such that :math:`I`, the incident intensity during the experiment, can be re-measured. Without drifts one should have :math:`I_0=I`. The corrected absorption is then given by
+This permits to correct for drifts of the lamp spectrum over the course of the experiment. However, it doesn't permit to automatically take a reference of the lamp spectrum :math:`R` because the two beam paths are not identic. :math:`R` has still to be recorded by manually inserting a pure sample solvent at the begin of the experiment. :math:`I_0`, the incident intensity monitored through the additional beam path, has to be recorded previous to the experiment as well. During the experiment and when needed, the shutters can be switched such that :math:`I_0^\prime`, the incident intensity during the experiment, can be re-measured. Without drifts one should have :math:`I_0^\prime=I_0`. The corrected absorption is then given by
 
 .. math::
-   A(\lambda) = -\log_{10}\left(\frac SI\cdot\frac{I_0}R\right).
+   A(\lambda) = -\log_{10}\left(\frac S{I^\prime}\cdot\frac{I_0}R\right).
 
-The idea is to introduce a parameter defining the time span after which the loop recording absorption spectra has to be temporally left to record a renewed lamp spectum. Of course, we could implement all this into the controller since the only 'feedback' needed here is the time stamp from the recorded spectrum which tells when renewing the lamp spectrum is due. However, any other 'decision maker' would be hard to implement within the controller without breaking PyMoDAQ's modular design. A simple exchange of the spectro-photometer from Model XYZ to model :math:`\alpha\beta\gamma` would ask for re-implementing all the same in the corresponding controller. Certainly, a Python mixin could ease that. However, it would still introduce modularity at other places than forseen by PyMoDAQ. It is time to address the sequencer.
+The idea is to introduce a parameter defining the time span after which the loop recording absorption spectra has to be temporally left to record a renewed lamp spectum. Of course, we could implement all this into the controller since the only 'feedback' needed here is the time stamp from the recorded spectrum which tells when renewing the lamp spectrum is due. However, any other 'decision maker' would be hard to implement within the controller without breaking PyMoDAQ's modular design. Futhermore, a simple exchange of the spectro-photometer from model XYZ to model :math:`\alpha\beta\gamma` would ask for re-implementing all the same in the corresponding controller. Certainly, a Python mixin could ease that. However, it would still introduce modularity at other places than forseen by PyMoDAQ. It is time to address the sequencer.
