@@ -37,88 +37,101 @@ Now load the renamed file and adapt the names close to the top of the file accor
     class Absorption(CustomExt):
     ...
 
-Next comes the initialisation of the instance of the absorption extension. For the moment we just declare the type of the detector so that an IDE can guess it.
+The initialisation of the instance of the absorption extension can be left untouched.
 
 .. code-block::
 
     class Absorption(CustomExt):
-
     ...
- 
         def __init__(self, parent: gutils.DockArea, dashboard):
-            self.detector: DAQ_Viewer = None
             super().__init__(parent, dashboard)
             self.setup_ui()
 
-Though the method :code:`setup_ui` needs to be called in any custom extension, this is not done in the inherited classes' initialisation. The aim is to permit setting up some matter which is needed to initialise its UI but needs in turn the parent class already to be initialised.
+Note that though the method :code:`setup_ui` needs to be called in any custom extension, this is not done in the inherited classes' initialisation. The aim is to permit setting up some matter which is needed to initialise its UI but needs in turn the parent class already to be initialised.
 
-The main area of the application is accessible through the instance variable :code:`self.dockarea`. Any widgets can be added there via instances of :code:`Dock`. the following code creates the display for the current measurement. It should be pretty self explaining.
+The main GUI area of the application is accessible through the instance variable :code:`self.dockarea`. Any widgets can be added there via instances of :code:`Dock`. the following code creates the display for the current measurement. It should be pretty self explaining.
 
 .. code-block::
 
-    class Absorption(CustomExt):
-
+    from pymodaq_gui.utils.dock import Dock, DockLabel
+    from pymodaq_gui.plotting.data_viewers.viewer1D import Viewer1D
     ...
- 
+    class Absorption(CustomExt):
+    ...
         def setup_docks(self):
             self.create_dashboard_toolbar()
 
             self.spectrum_label = DockLabel("Raw Data")
             spectrum_dock = Dock('Data', label=self.spectrum_label)
-            self.docks['spectrum'] = \
-                self.dockarea.addDock(spectrum_dock, "right",
-                                      self.docks['settings'])
+            self.docks['spectrum'] = self.dockarea.addDock(spectrum_dock)
             spectrum_widget = QtWidgets.QWidget()
             self.spectrum_viewer = Viewer1D(spectrum_widget)
             self.spectrum_viewer.toolbar.hide()
             spectrum_dock.addWidget(spectrum_widget)
 
-To be able to test the newly constructed GUI, a method populated later has to be temporarily disabled.
+To be able to test the newly constructed GUI, two methods populated later have to be temporarily disabled.
 
 .. code-block::
-   :emphasize-lines: 6
+   :emphasize-lines: 4,8
 
     class Absorption(CustomExt):
-
     ...
- 
         def setup_actions(self):
             return
-            """Method where to create actions to be subclassed. Mandatory
-            ...
-            
-The dashboard may now be launched
+            """Method where to create actions to be subclassed. Mandatory"""
+    ...
+        def connect_things(self):
+            return
+            """Connect actions and/or other widgets signal to methods"""
+
+
+To make PyMoDAQ aware of the newly created extension we have to re-install the package in ediatble mode which hasto be done in the root directory of the package::
+
+  $ cd /path/to/extension-plugin-code/pymodaq_plugins_tutorial_extension
+  $ pip install -e .
+
+The dashboard may now be launched. The command line switch -x tells PyMoDAQ to directly load the indicated experiment configuration.
 
 .. code-block::
 
-   $ dashboard -p absorption
+   $ dashboard -x absorption
 
 The list of extensions should contain an entry "Absorption". After starting it, a window should pop up which looks like the following
 
 .. image:: bare-extension.png
 
-However, it hasn't got any functionality yet. To get things working in a preliminary and primitive fashion we add a method that accepts data from the spectrograph's 1D viewer plugin. It simply extracts the raw spectrometer data from the received :code:`DataToExport` object and displays that in the viewer.
+However, it hasn't got any functionality yet. In case that our newly created extension deosn't show up in the list, most likely some typo or messed up indentation prevents the module from being loaded. To check that you may run the extension code directly::
+
+  $ cd src/pymodaq_plugins_tutorial_extension/extensions
+  $ python absorption.py
+
+If python throws any error at you, that message should tell where the problem is. In case of success, the bare extension window should pop up. Another source of information can be the log file which you may scan for error messages.
+
+:code:`tag bare-extension`
+
+To get things working in a preliminary and primitive fashion we add a method that accepts data from the spectrograph's 1D viewer plugin. It simply extracts the raw spectrometer data from the received :code:`DataToExport` object and displays that in the viewer.
 
 .. code-block::
 
-    class Absorption(CustomExt):
-
+    from pymodaq.utils.data import DataToExport
     ...
- 
+    class Absorption(CustomExt):
+    ...
         def take_data(self, data: DataToExport):
             spectro_data = data.get_data_from_dim('Data1D')[0]
             self.spectrum_viewer.show_data(spectro_data)
 
-Note that this assumes that the data received from the plugin contains a set of one dimensional data and that the first (or only) one dimensional array therein contains the intensity data from the spectrometer. This is where we may hit the limits for creating generic a application. A plugin written by someone alse and delivering its data in a different form may not be working here. :code:`DataToExport` comes with quite a list of methods which permit to extract contained data identified by names and labels. Having a general spectrometer application in mind, one may want to retrieve first a data set, analyse its content and give the user the choice what data item should be taken. However, for the time being we know what's in there and can just go on.
+Note that this assumes that the data received from the plugin contains a set of one dimensional data and that the first (or only) one dimensional array therein contains the intensity data from the spectrometer. This is where we may hit the limits for creating a generic application. A plugin written by someone alse and delivering its data in a different form may not be working here. :code:`DataToExport` comes with quite a list of methods which permit to extract contained data identified by names and labels. Having a general spectrometer application in mind, one may want to retrieve first a data set, analyse its content and give the user the choice what data item should be taken. However and for the time being, we know what's in there and can just go on.
 
-Once the dashboard has been loaded with the experiment, the devices defined in the experiment can be registered with the modules manager. This allows to obtain a reference to the detector which can be connected to the data display. The mechanism behind the scene is that once the method :code:`self.detector.grab()` is called, PyMoDAQ quests acquisition on the device in a loop. For each retrieved data item the plugin emits the signal :code:`grab_done_signal` which is connected to the extension's method :code:`take_data`.
+Once the dashboard has been loaded with the experiment, the devices defined in the experiment can be registered with the modules manager. This allows to obtain a reference to the detector which can be connected to the data display. The mechanism behind the scene is that once the method :code:`self.detector.grab()` is called, PyMoDAQ quests acquisition on the device in a loop. For each retrieved data item the plugin emits the signal :code:`grab_done_signal` which we have to connect to the extension's method :code:`take_data`.
 
 .. code-block::
 
-    class Absorption(CustomExt):
-
+    from pymodaq.utils.data import DataToExport, Axis
+    from pymodaq.utils.managers.modules.utils import ModuleType
     ...
-
+    class Absorption(CustomExt):
+    ...
         def do_things_after_experiment_set(self, experiment_name: str):
             self.modules_manager.detectors_all = \
                 self.dashboard.modules_manager.detectors_all
@@ -138,16 +151,14 @@ Two methods take care of starting and ending the acquisition.
 .. code-block::
 
     class Absorption(CustomExt):
-
     ...
-
         def start_acquiring(self):
             self.detector.grab()
 
         def stop_acquiring(self):
             self.detector.stop_grab()
 
-To make them accessible from the GUI, two methods predefined in the template have to be populated
+To make them accessible from the GUI, two methods predefined in the template which we had deactivated before have to be populated.
 
 .. code-block::
    :emphasize-lines: 2-5,8-
@@ -162,16 +173,16 @@ To make them accessible from the GUI, two methods predefined in the template hav
         self.connect_action('acquire', self.start_acquiring)
         self.connect_action('stop', self.stop_acquiring)
 
-The extension has now a tool bar from which the acquistion can be started and stopped.
+The extension has now a second tool bar from which the acquistion can be started and stopped.
 
 .. image:: extension-with-toolbar.png
 
-At this point the extension does nothing more than what is already happening in the panel named "Spectrometer MockSpectro" in the dashboard. When starting acquisition in the extension, the recorded data is updated both in the extension and in the dashboard, while starting the acquisition in the latter, data is updated only on the latter.
+When you start the acquistion, the extension does nothing more than what is already happening in the panel named "Spectrometer MockSpectro" in the dashboard.
 
 Stopping acquisition before it has been started doesn't make much sense. PyMoDAQ still handles the situation correctly. However, necessary actions unknown to PyMoDAQ may not do so. It is therefore better to activate only those actions which actually make sense.
 
 .. code-block::
-   :emphasize-lines: 6,7,11,12
+   :emphasize-lines: 6,7,12-
 
     def setup_actions(self):
         ...
@@ -183,13 +194,13 @@ Stopping acquisition before it has been started doesn't make much sense. PyMoDAQ
         self.detector.grab()
 
     def stop_acquiring(self):
+        self.detector.stop_grab()
         self._actions["acquire"].setEnabled(True)
         self._actions["stop"].setEnabled(False)
-        self.detector.stop_grab()
 
-Note that this introduces a bug. The dasboard is of course not aware of the functionality created in the extension. When starting or stopping the acquisition, the tool bar buttons in the extension are not updated. Again, this will be addressed later on.
+Note that this introduces a bug. The dasboard is of course not aware of the functionality created in the extension. When starting or stopping the acquisition from the dashboard, the tool bar buttons in the extension are not updated. Again, this will be addressed later on.
 
-You may have noticed while playing around with the extension that it opens up with size which is not very suitable. And changes to the window are not preserved over quitting the dashboard. Let's make changes so that the GUI geometry stays permanently. Two functions, inverse of each other, take care of writing the current parameter values and geometry settings to a configuration file and reading them back. This is done here in a preliminary fashion using Qt's settings mechanism. **@PyMoDAQxperts:** please replace this with more PyMoDAQonian style ...
+You may have noticed while playing around with the extension that it opens up with a size which is not very suitable. And changes to the window are not preserved over quitting the dashboard. Let's make changes so that the GUI geometry stays permanently. Two functions, inverse of each other, take care of writing the current parameter values and geometry settings to a configuration file and reading them back. This is done here in a preliminary fashion using Qt's settings mechanism. **@PyMoDAQxperts:** please replace this with more PyMoDAQonian style ...
 
 
 .. code-block::
