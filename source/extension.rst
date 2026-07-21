@@ -204,14 +204,11 @@ Note that this introduces a bug. The dasboard is of course not aware of the func
 
 You may have noticed while playing around with the extension that it opens up with a size which is not very suitable. And changes to the window are not preserved over quitting the dashboard. Let's make changes so that the GUI geometry stays permanently. Two functions, inverse of each other, take care of writing the current parameter values and geometry settings to a configuration file and reading them back. This is done here in a preliminary fashion using Qt's settings mechanism. **@PyMoDAQxperts:** please replace this with more PyMoDAQonian style ...
 
-
 .. code-block::
 
     def write_settings(self, qt_settings):
         qt_settings.setValue("geometry", self.mainwindow.saveGeometry())
         qt_settings.setValue("dockarea", self.dockarea.saveState())
-        for name in self.settings_entries:
-            qt_settings.setValue(name, self.settings[name])
 
    def read_settings(self, qt_settings):
         geometry = self.qt_settings.value("geometry", QByteArray())
@@ -224,16 +221,14 @@ You may have noticed while playing around with the extension that it opens up wi
                 # erease inconsistent settings in case pyqtgraph trips
                 self.qt_settings.setValue("dockarea", None)
 
-        for name in self.settings_entries:
-            value = qt_settings.value(name, None)
-            if value is not None:
-                self.settings[name] = value
-
 To make this work, the two functions have to be hooked up into the initialisation and shut down procedures.
 
 .. code-block::
-   :emphasize-lines: 4-7,9-
+   :emphasize-lines: 1,2,7-10,12-
 
+    from qtpy.QtCore import QSettings, QByteArray
+    from pymodaq_utils.config import Config, ConfigError, get_set_config_dir
+    ...
     def __init__(self, parent: gutils.DockArea, dashboard):
         ...
         self.setup_ui()
@@ -245,17 +240,17 @@ To make this work, the two functions have to be hooked up into the initialisatio
     def quit_fun(self):
         self.write_settings(self.qt_settings)
 
-The first of the newly introduced lines in the init method returns a path to a subfolder :file:`gui-state` located in the user's PyMoDAQ configuration folder. If that subfolder doesn't exist yet it is created. GUI settings can go in there now. Have a try, resizing the extension window should now persist over shutting down and restarting the extension and the dashboard.
+The first of the newly introduced lines in the init method returns a path to a subfolder :file:`gui-state` located in the user's PyMoDAQ configuration folder. If that subfolder doesn't exist yet it is created. GUI settings can go in there now. Have a try, resizing the extension window should now persist over shutting down and restarting the extension and the dashboard. Note that this geometry sub-section may not be necessary in future versions of PyMoDAQ. An ongoing pull request may incorporate the feature into the custom app base class.
 
-The paramaters controlling the spectrometer are all accessible in the experiment and could be changed via the detector's widget in the dashboard. However, to ease operating the device, a set of most important parameters shall be displayed in the main window of the spectrometer application. They are declared in the preamble of the extension class in the same fashion as device parameters in the preamble of a plugin class. All parameters defined in :code:`params[]` are avaliable in :code:`self.settings_tree`.
+:code:`tag geometry`
+
+The paramaters controlling the spectrometer are all accessible in the experiment configuration and could be changed via the detector's widget in the dashboard, or using the configurator (try this out yourself as an exercice). However, to ease operation, a set of most important parameters shall be displayed in the main window of the spectrometer application. They are declared in the preamble of the extension class in the same fashion as device parameters in the preamble of a plugin class. All parameters defined in :code:`params[]` are made avaliable in :code:`self.settings_tree` by PyMoDAQ's start-up machinery.
 
 .. code-block::
-   :emphasize-lines: 23-25
+   :emphasize-lines: 3-14,19-21,25-
 
     class Absorption(CustomExt):
-
         ...
-
         params = [
             {'name': 'device_params', 'title': 'Device parameters', 'type': 'group',
              'children': [
@@ -268,9 +263,7 @@ The paramaters controlling the spectrometer are all accessible in the experiment
                ]
              },
            ]
-
         ...
-
         def setup_docks(self):
             self.create_dashboard_toolbar()
 
@@ -279,17 +272,18 @@ The paramaters controlling the spectrometer are all accessible in the experiment
             self.docks['settings'].addWidget(self.settings_tree)
 
             self.spectrum_label = DockLabel("Raw Data")
-            ...
+            spectrum_dock = Dock('Data', label=self.spectrum_label)
+            self.docks['spectrum'] = \
+                self.dockarea.addDock(spectrum_dock, "right",
+                                      self.docks['settings'])
 
-To make the detector aware of parameter changes, another predefined method has to be populated
+The newly introduced dock holds a parameter tree containing what has been defined in :code:`params`. Note the change in placing the data viewer at the right of the parameter dock. To make the detector aware of parameter changes, another predefined method has to be populated
 
 .. code-block::
-   :emphasize-lines: 6-
+   :emphasize-lines: 4-
 
     class Absorption(CustomExt):
-
     ...
- 
         def value_changed(self, param):
             if param.name() == "integration_time":
                 self.detector.settings.child('detector_settings',
@@ -309,18 +303,24 @@ The Absorption extension should now look like
 The parameter ``Average`` has not yet any effect. Let's change that. 
 
 .. code-block::
-   :emphasize-lines: 7-20,25,26,29-
+   :emphasize-lines: 1,3,8,9,13-28,30-
 
+    import numpy as np
+    ...
+    from pymodaq.utils.data import DataToExport, DataFromPlugins, Axis
+    ...
     class Absorption(CustomExt):
-
         ...
-
+        def start_acquiring(self):
+            self.n_samples = 0
+            self.n_average = self.settings.child('device_params')['averaging']
+            ...
         def take_data(self, data: DataToExport):
             spectro_data = data.get_data_from_dim('Data1D')[0]
             self.n_samples = self.accumulate_data(spectro_data[0], self.n_samples)
             if self.n_samples < self.n_average:
                 return
-            
+
             if self.n_average < 2:
                 self.spectrum_viewer.show_data(spectro_data)
                 return
@@ -328,17 +328,12 @@ The parameter ``Average`` has not yet any effect. Let's change that.
             self.mean_current, self.error_current = \
                 self.average_data(self.sum_data, self.squares_data, self.n_samples)
             self.n_samples = 0
-            dfp = DataFromPlugins(name=name, data=[self.mean_current, self.error_current],
-                                  dim='Data1D', labels=[name, 'error'], axes=[self.x_axis])
+            dfp = DataFromPlugins(name='current',
+                                  data=[self.mean_current, self.error_current],
+                                  dim='Data1D', labels=['current', 'error'],
+                                  axes=[self.x_axis])
             self.spectrum_viewer.show_data(dfp)
-
-        ....
-
-        def start_acquiring(self):
-            self.n_samples = 0
-            self.n_average = self.settings.child('device_params')['averaging']
-            ...
-
+        ...
         def accumulate_data(self, data, n_samples):
             if n_samples:
                 self.sum_data += data
@@ -355,6 +350,8 @@ The parameter ``Average`` has not yet any effect. Let's change that.
             return mean, error
 
 Zooming in on the error curve permits to see how the error scales now with :math:`\sqrt{n_\mathrm{average}}`.
+
+:code:`tag averaging`
 
 Once again, changes on the parameters do not survive quitting. One could write them to and recover them from a config file one by one. However, expecting the number of parameters to increase with time, it will be advantageous to prepare for that now. Since the device params are a dict inside a dict inside an array, it is easier to declare them in a separate list 
 
@@ -379,18 +376,22 @@ Once again, changes on the parameters do not survive quitting. One could write t
 
     ...
  
+        def write_settings(self, qt_settings):
+            ...
+            for param in self.device_params:
+                qt_settings.setValue(name,
+                                     self.settings.child('device_params') \
+                                     [param['name']])
+
         def read_settings(self, qt_settings):
             ...
             for param in self.device_params:
                 self.settings.child('device_params')[param['name']] = \
                     qt_settings.value(param['name'], param['value'])
-
-        def write_settings(self, qt_settings):
-            ...
-            for param in self.device_params:
-                qt_settings.setValue(name, 
-                                     self.settings.child('device_params')[param['name']])
+                                     
 
 The second argument of :code:`QSettings.value` is a default value which prevents a :code:`None` value being inserted when the entry asked for is not present in the configuration file, which would cause an exception to be raised.
 
-Until now, the extension still does nothing more than a bare plugin can do. Deatures beyond will be introduced in the next chapter.
+Until now, the extension still does nothing more than a bare plugin can do. Features beyond will be introduced in the next chapter.
+
+:code:`params-to-settings`
