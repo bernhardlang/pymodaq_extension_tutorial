@@ -82,7 +82,7 @@ The GUI has also to be updated. It is always a good idea to display all data ent
 Two new actions are needed
 
 .. code-block::
-   :emphasize-lines: 18-13
+   :emphasize-lines: 8-13
 
     class Absorption(CustomExt):
     ...
