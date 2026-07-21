@@ -37,7 +37,7 @@ Now load the renamed file and adapt the names close to the top of the file accor
     class Absorption(CustomExt):
     ...
 
-The initialisation of the instance of the absorption extension can be left untouched.
+The initialisation of the instance of the absorption extension can be left untouched for now.
 
 .. code-block::
 
@@ -49,7 +49,7 @@ The initialisation of the instance of the absorption extension can be left untou
 
 Note that though the method :code:`setup_ui` needs to be called in any custom extension, this is not done in the inherited classes' initialisation. The aim is to permit setting up some matter which is needed to initialise its UI but needs in turn the parent class already to be initialised.
 
-The main GUI area of the application is accessible through the instance variable :code:`self.dockarea`. Any widgets can be added there via instances of :code:`Dock`. the following code creates the display for the current measurement. It should be pretty self explaining.
+The main GUI area of the application is accessible through the instance variable :code:`self.dockarea`. Any widgets can be added there via instances of :code:`Dock`. The following code creates the display for the current measurement. It should be pretty self explaining.
 
 .. code-block::
 
@@ -85,7 +85,7 @@ To be able to test the newly constructed GUI, two methods populated later have t
             """Connect actions and/or other widgets signal to methods"""
 
 
-To make PyMoDAQ aware of the newly created extension we have to re-install the package in ediatble mode which hasto be done in the root directory of the package::
+To make PyMoDAQ aware of the newly created extension we have to re-install the package in ediatble mode which has to be done in the root directory of the package::
 
   $ cd /path/to/extension-plugin-code/pymodaq_plugins_tutorial_extension
   $ pip install -e .
@@ -100,10 +100,10 @@ The list of extensions should contain an entry "Absorption". After starting it, 
 
 .. image:: bare-extension.png
 
-However, it hasn't got any functionality yet. In case that our newly created extension deosn't show up in the list, most likely some typo or messed up indentation prevents the module from being loaded. To check that you may run the extension code directly::
+However, it hasn't got any functionality yet. In case that our newly created extension doesn't show up in the list, most likely some typo or messed up indentation prevents the module from being loaded. To check that, you may run the extension code directly::
 
   $ cd src/pymodaq_plugins_tutorial_extension/extensions
-  $ python absorption.py
+  $ python absorption_extension.py
 
 If python throws any error at you, that message should tell where the problem is. In case of success, the bare extension window should pop up. Another source of information can be the log file which you may scan for error messages.
 
@@ -144,7 +144,7 @@ Once the dashboard has been loaded with the experiment, the devices defined in t
                 Axis(label='Wavelength', units='nm',
                      data=self.detector.controller.wavelengths, index=0)
 
-Note that it is assumed here for sake of simplicity and for now that the spectrometer exports its wavelength calibration by a :code:`wavelength` property. This may not be the case for any spectrograph and will be covered in a more general fashion later. There's another issue here how to identify the device of choice. :code:`ModulesManager.get_mod_from_name` needs to get the name  exactly as we have defined it in the experiment. However, how should a non-developping user know what to enter there, unless having been specificly instructed? We'll cover that later with an appropriated configuration dialog. For now, we'll have to pay attention that the two names match exactly.
+Note that there's an issue here how to identify the device of choice. :code:`ModulesManager.get_mod_from_name` needs to get the name  exactly as we have defined it in the experiment. However, how should a non-developping user know what to enter there, unless having been specificly instructed? We'll cover that later with an appropriated configuration dialog. For now, we'll have to pay attention that the two names match exactly.
 
 Two methods take care of starting and ending the acquisition.
 
@@ -200,6 +200,8 @@ Stopping acquisition before it has been started doesn't make much sense. PyMoDAQ
 
 Note that this introduces a bug. The dasboard is of course not aware of the functionality created in the extension. When starting or stopping the acquisition from the dashboard, the tool bar buttons in the extension are not updated. Again, this will be addressed later on.
 
+:code:`tag extension-with-data`
+
 You may have noticed while playing around with the extension that it opens up with a size which is not very suitable. And changes to the window are not preserved over quitting the dashboard. Let's make changes so that the GUI geometry stays permanently. Two functions, inverse of each other, take care of writing the current parameter values and geometry settings to a configuration file and reading them back. This is done here in a preliminary fashion using Qt's settings mechanism. **@PyMoDAQxperts:** please replace this with more PyMoDAQonian style ...
 
 
@@ -243,7 +245,7 @@ To make this work, the two functions have to be hooked up into the initialisatio
     def quit_fun(self):
         self.write_settings(self.qt_settings)
 
-The first newly introduced line in the init method returns a path to a subfolder :file:`gui-state` located in the user's PyMoDAQ configuration folder. If that subfolder doesn't exist yet it is created. GUI settings can go in there now. Have a try, resizing the extension window should now persist over shutting down and restarting the extension and the dashboard.
+The first of the newly introduced lines in the init method returns a path to a subfolder :file:`gui-state` located in the user's PyMoDAQ configuration folder. If that subfolder doesn't exist yet it is created. GUI settings can go in there now. Have a try, resizing the extension window should now persist over shutting down and restarting the extension and the dashboard.
 
 The paramaters controlling the spectrometer are all accessible in the experiment and could be changed via the detector's widget in the dashboard. However, to ease operating the device, a set of most important parameters shall be displayed in the main window of the spectrometer application. They are declared in the preamble of the extension class in the same fashion as device parameters in the preamble of a plugin class. All parameters defined in :code:`params[]` are avaliable in :code:`self.settings_tree`.
 

@@ -11,7 +11,7 @@ Once you launch the experiment, your dashboard should present the dark shutter p
 
 .. image:: dashboard.png
 
-Start continuous grabbing on the spectrometer and watch the displayed data switching between dark and illuminated signal as you click on the red and green arrows in the move's GUI to open and close the virtual shutter.
+Enter a value larger than zero onto the red value field of the shutter actirator, start continuous grabbing on the spectrometer and watch the displayed data switching between dark and illuminated signal as you click on the red and green arrows in the move's GUI to open and close the virtual shutter.
 
 .. image:: dashboard-dark.png
 
