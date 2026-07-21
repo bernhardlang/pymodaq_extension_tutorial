@@ -1,23 +1,21 @@
 A simple absorption spectrometer
 ================================
 
-The goal of this chapter is to turn the bare spectro-photometer into an absorption spectrometer. The spectrometer should have three working modes, display raw detector data, display background subtracted detector data and display absorption. A full absorption measurement needs the determination of the detector's dark signal, to be subtracted from each acquisition, and a reference of the incident light. The corresponding workflow is 
+The goal of this chapter is to turn the bare spectro-photometer into an absorption spectrometer. It should have three working modes, display raw detector data, display background subtracted detector data and display absorption. A full absorption measurement needs the determination of the detector's dark signal, to be subtracted from each acquisition, and a reference of the incident light. The corresponding workflow is 
 
 #. Determine the dark using the corresponding shutter.
-#. Ask the user to insert a sample with pure solvent.
-#. Perform the absorption measurement with the real sample.
+#. Let the user insert a sample with pure solvent.
+#. Perform the absorption measurement on a real sample.
 
 Since the noise on the background and the reference data enter into each subsequent absorption measurement, it can be of advantage to accumulate these data with a larger number of samples. Therefore, an additional averaging parameter is introduced for each of these measurements.
 
 .. code-block::
-   :emphasize-lines: 3,7-19
+   :emphasize-lines: 3,5-15,17
 
     class Absorption(CustomExt):
 
-        measurement_modes = [ 'Raw', 'Background Subtracted', 'Absorption' }
-
+        measurement_modes = [ 'Raw', 'Background Subtracted', 'Absorption' ]
         ...
-
         application_params = [
             {'name': 'measurement_mode', 'title': 'Measurement Mode',
              'type': 'list', 'limits': measurement_modes,
@@ -29,7 +27,7 @@ Since the noise on the background and the reference data enter into each subsequ
              'type': 'int', 'min': 1, 'max': 1000, 'value': 100,
              'tip': 'Reference Software Averaging'},
         ]
-
+        ...
         params = application_params + [
         ...
 
@@ -47,22 +45,21 @@ To make the values of these settings persistent, their storage has to be updated
         def write_settings(self, qt_settings):
             ...
             for param in self.application_params:
-                qt_settings.setValue(name, self.settings[param['name']])
+                qt_settings.setValue(param['name'], self.settings[param['name']])
 
-`TODO: the settings values should probably go to a toml file.`
-
-The GUI has also to be updated. It is always a good idea to display all data entering into the final result in some fashion.  A simple mockup ofthe GUI of our extension shows the general idea.
+The GUI has also to be updated. It is always a good idea to display all data entering into the final result in some fashion. A simple mockup of the GUI of our extension shows the general idea.
 
 .. image:: extension-mockup.png
    :align: center
 
 
 .. code-block::
+   :emphasize-lines: 3,5-
 
     def setup_docks(self):
         ...
- 
-        # plot for raw spectrum data and reference 
+        self.spectrum_label = DockLabel("Current Data")
+        ...
         raw_data_dock = Dock('Raw Data')
         self.docks['raw-data'] = \
             self.dockarea.addDock(raw_data_dock, "bottom",
@@ -73,7 +70,6 @@ The GUI has also to be updated. It is always a good idea to display all data ent
 
         raw_data_dock.addWidget(raw_data_widget)
 
-        # plot for background 
         background_dock = Dock('Background')
         self.docks['background'] = \
             self.dockarea.addDock(background_dock, "bottom",
@@ -86,12 +82,10 @@ The GUI has also to be updated. It is always a good idea to display all data ent
 Two new actions are needed
 
 .. code-block::
-   :emphasize-lines: 10-15
+   :emphasize-lines: 18-13
 
     class Absorption(CustomExt):
-
     ...
- 
         def setup_actions(self):
             self.add_action('acquire', 'Acquire', 'run2',
                             "Acquire", checkable=False, toolbar=self.toolbar)
@@ -109,7 +103,9 @@ After deleting again the gui settings file, the extension should now look like
 
 .. image:: absorption-extension.png
 
-If you need icons which are not present in the icon library (:file:`pymodaq_gui/resources/icon_library`), you'll have to select suitable ones at https://fonts.google.com/icons. To be able to add them to PyMoDAQ's icon library you have to fork the PyMoDAQ repository, add the icons' names to the list in :file:`pymodaq_gui/resources/icons.toml` and follow the instructions in there and in :file:`pymodaq_gui/resources/check_icons_dev.py`. After a pull request, the additional icons will be available to all PyMoDAQ users. During development it is sufficient to install the pymodaq_gui package in editable mode within your work environment.
+If you need icons which are not present in the icon library (:file:`pymodaq_gui/resources/icon_library`), you'll have to select suitable ones at https://fonts.google.com/icons. To be able to add them to PyMoDAQ's icon library you have to fork the PyMoDAQ repository, add the icons' names to the list in :file:`pymodaq_gui/resources/icons.toml` and follow the instructions therein and in :file:`pymodaq_gui/resources/check_icons_dev.py`. After a pull request, the additional icons will be available to all PyMoDAQ users. During development it is sufficient to install the pymodaq_gui package in editable mode within your working environment and apply these changes there.
+
+:code:`tag updated-gui`
 
 The newly defined actions do not yet trigger any real operations. However, we should prepare some book keeping to prevent exceptions being raised due to missing properties. In the 'Raw' mode, neither background nor reference data are needed. Both new actions should therefore be disabled in that mode. On the other hand, when selecting 'Background Subtracted', a measurement is not possible until the background has been recorded. Likewise, an absorption measurement is possible only once both background and reference have been determined. The follwoing routine takes care of the correspong activation and deactivation operations.
 
@@ -117,12 +113,9 @@ The newly defined actions do not yet trigger any real operations. However, we sh
 
 
     class Absorption(CustomExt):
-
     ...
-
         def adjust_actions(self):
 
-            # acquire, back, ref
             action_states = {
                 'Raw': [True, False, False],
                 'Background Subtracted': [self.have_background, True, False],
@@ -136,18 +129,16 @@ The newly defined actions do not yet trigger any real operations. However, we sh
             self.docks['settings'].setEnabled(is_idle)
             self._actions["stop"].setEnabled(not is_idle)
             for name,state in zip(["acquire", "background", "reference"],
-                                  action_states(mode)):
+                                  action_states[mode]):
                 self._actions[name].setEnabled(state)
 
-To make this work, we need to declare the flags at initialisation and to call this method whenever the measurement mode or the state of the flags has changed. Some other parameter changes may equally call for an update of the actions. E.g. the background signal depends on the integration time. Changing the latter we have to invalidate the former. We also have to distinguish between normal acqusition and acquisition of background and reference data. Furthermore, while the shutter is moving or we wait for the user to exchange samples, any incoming data should be discarded.
+To make this work, we need to declare the flags at initialisation and to call this method whenever the measurement mode or the state of the flags has changed. Some other parameter changes may equally call for an update of the actions. E.g. the background signal depends on the integration time. When the latter is changed we have to invalidate the former. We also have to distinguish between normal acqusition and acquisition of background and reference data. Furthermore, while the shutter is moving or we wait for the user to exchange samples, any incoming data should be discarded.
 
 .. code-block::
-   :emphasize-lines: 8-11,20-
+   :emphasize-lines: 6-9,16-20,25,26,31-
 
     class Absorption(CustomExt):
-
     ...
-
         def __init__(self, parent: gutils.DockArea, dashboard):
             self.detector: DAQ_Viewer = None
             super().__init__(parent, dashboard)
@@ -158,8 +149,6 @@ To make this work, we need to declare the flags at initialisation and to call th
             self.setup_ui()
             ...
 
-        ...
-
         def value_changed(self, param):
             if param.name() == "integration_time":
                 ...
@@ -168,18 +157,26 @@ To make this work, we need to declare the flags at initialisation and to call th
                 self.have_background = False
                 self.have_reference = False
             self.adjust_actions()
-  
-Adjusting the actions may not be necessary each time some parameter has changed. However, it is safer just to do so.
 
-Data coming in from the plugin have now to be handled in different ways depending on the acquisition mode. 
+        def start_acquiring(self):
+            self.n_samples = 0
+            self.n_average = self.settings.child('device_params')['averaging']
+            self.acquisition_mode = 'acquire'
+            self.adjust_actions()
+            self.detector.grab()
+
+        def stop_acquiring(self):
+            self.detector.stop_grab()
+            self.acquisition_mode = 'idle'
+            self.adjust_actions()
+
+Adjusting the actions may not be necessary each time some parameter has changed. However, it is safer just to do so. Data coming in from the plugin have now to be handled in different ways depending on the acquisition mode. 
 
 .. code-block::
-   :emphasize-lines: 9-
+   :emphasize-lines: 7-
 
     class Absorption(CustomExt):
-
     ...
-
         def take_data(self, data: DataToExport):
             ...
             self.n_samples = 0
@@ -188,7 +185,7 @@ Data coming in from the plugin have now to be handled in different ways dependin
                 self.show_data(self.mean_current, self.error_current, 'raw')
                 return
 
-            if self.acquisition_mode == 'normal':
+            if self.acquisition_mode == 'acquire':
                 self.take_normal(self.mean_current, self.error_current)
             else:
                 self.data_valid = False
@@ -200,14 +197,12 @@ Data coming in from the plugin have now to be handled in different ways dependin
                 else:
                     self.take_reference(self.mean_current, self.error_current)
 
-Spectral regions where the light leve lof the whitelight lamp is low may induce problems. In such regions one may obtain negative signals through fluctuations of the background and in consequence, the logarithm is not defined any more. To avoid :code:`NaN` values which may screw up the graphical display, a mask of validity is kept together with the reference signal.
+Spectral regions where the level of the whitelight lamp is low may induce problems. In such regions one may obtain negative signals through fluctuations of the background and in consequence, the logarithm is not defined any more. To avoid :code:`NaN` values which may screw up the graphical display, a mask of validity is kept together with the reference signal.
 
 .. code-block::
 
     class Absorption(CustomExt):
-
     ...
-
         def take_normal(self, mean, error):
             self.mean_signal = mean - self.background
 
@@ -235,6 +230,7 @@ Spectral regions where the light leve lof the whitelight lamp is low may induce 
             self.background = mean
             self.error_background = error
             self.have_background = True
+            self.have_reference = False
             dfp = DataFromPlugins(name='Spectrograph',
                                   data=[self.background, self.error_background],
                                   dim='Data1D', labels=['background', 'error'],
@@ -243,19 +239,18 @@ Spectral regions where the light leve lof the whitelight lamp is low may induce 
             self.background_viewer.show_data(dfp)
             self.dark_shutter.move_abs(1200)
 
-Recording the reference in the simulatged environment needs a little tweak. With the real machine, the user exchanges the sample with a pure solvent cuvette. In the present simulation this hasto be done by software. To this end we try to set the controller's property :code:`with_sample` and ignore the corresponding exception in case that fails because the real world device controller has no such property.
+Recording the reference in the simulatged environment needs a little tweak. With the real machine, the user exchanges the sample with a pure solvent cuvette. In the present simulation this has to be done by software. To this end we try to set the controller's property :code:`with_sample` and ignore the corresponding exception in case that this fails because the real world device controller has no such property.
 
 .. code-block::
 
     class Absorption(CustomExt):
-
     ...
-
         def take_reference(self, mean, error):
             self.reference = mean - self.background
             self.error_reference = error
             self.reference_valid_mask = self.reference > 0
             self.have_reference = True
+            self.absorption = None
             dfp = DataFromPlugins(name='Spectrograph',
                                   data=[self.reference, self.error_reference],
                                   dim='Data1D', labels=['reference', 'error'],
@@ -285,23 +280,17 @@ Recording the reference in the simulatged environment needs a little tweak. With
 To record the background, the shutter has to be closed. The take-background action has in fact to trigger that operation. Upon arrival, the corresponding :code:`DAQ_move` instance emits the signal :code:`move_done` which
 
 .. code-block::
-   :emphasize-lines: 9-12,16-22,24-
+   :emphasize-lines: 5-8,10-16,18-
 
     class Absorption(CustomExt):
-
     ...
-
         def do_things_after_experiment_set(self, experiment_name: str):
-
             ...
-
             self.dark_shutter = \
             self.modules_manager.get_mod_from_name('dark-shutter',
                                                     ModuleType.Actuator)
             self.dark_shutter.move_done_signal.connect(self.shutter_ready)
-
         ...
-
         def start_background(self):
             self.data_valid = False
             self.acquisition_mode = 'background'
@@ -321,10 +310,10 @@ Similar for the reference measurement, just that instead of closing a shutter we
 
 .. code-block::
 
-    class Absorption(CustomExt):
-
+    from qtpy.QtWidgets import QMessageBox
     ...
-
+    class Absorption(CustomExt):
+    ...
         def start_reference(self):
             result = \
                 QMessageBox.question(None, "Reference", "Insert a blank sample",
@@ -343,38 +332,33 @@ Similar for the reference measurement, just that instead of closing a shutter we
             self.adjust_actions()
             self.detector.grab()
 
-
 To make things operative, the actions have be connected to the corresponding methods.
 
 .. code-block::
-   :emphasize-lines: 8-
+   :emphasize-lines: 6-
 
     class Absorption(CustomExt):
-
     ...
-
         def connect_things(self):
             self.connect_action('acquire', self.start_acquiring)
             self.connect_action('stop', self.stop_acquiring)
             self.connect_action('background', self.start_background)
             self.connect_action('reference', self.start_reference)
 
+:code:`tag full-absorption`
+
 To finish up this section we add a simple method to export data in csv format. Handling H5 storage is covered in a later chapter.
 
 .. code-block::
-   :emphasize-lines: 7,8,14
+   :emphasize-lines: 5,6,10,13-
 
     class Absorption(CustomExt):
-
     ...
- 
         def setup_actions(self):
             ...
             self.add_action('save', 'Save Current', '',
                             "Save Current", checkable=False, toolbar=self.toolbar)
-
         ...
-
         def connect_things(self):
             ...
             self.connect_action('save', self.save_current_data)
@@ -383,8 +367,15 @@ To finish up this section we add a simple method to export data in csv format. H
             file_menu = self.mainwindow.menuBar().addMenu('File')
             self.affect_to('save', file_menu)
             file_menu.addSeparator()
-            #self.affect_to('quit', file_menu)
- 
+
+And finally a method for the data export 
+
+.. code-block::
+
+    import csv
+    from os import path
+    ...
+
         def save_current_data(self):
             directory = self.qt_settings.value('data-dir', None)
             if directory is None:
@@ -408,8 +399,7 @@ To finish up this section we add a simple method to export data in csv format. H
                                         '%.3f' % self.error_current[i]])
                     return
 
-                if self.measurement_mode == WITH_BACKGROUND \
-                   or not self.have_reference:
+                if self.settings['measurement_mode'] == 'Background':
                     writer.writerow(['wavelength', 'current data', 'current error',
                                      'background', 'error background',
                                      'background subtracted', 'error'])
@@ -423,16 +413,38 @@ To finish up this section we add a simple method to export data in csv format. H
                     return
 
                 # self.settings['measurement_mode'] == 'Absorption'
-                writer.writerow(['wavelength', 'current data', 'current error', 'background',
-                                 'error background', 'reference', 'error reference',
-                                 'absorption', 'error'])
-                for i,wl in enumerate(wavelengths):
-                    writer.writerow(['%.1f' % wl, '%.3f' % self.mean_current[i],
-                                     '%.3f' % self.error_current[i],
-                                     '%.3f' % self.background[i],
-                                     '%.3f' % self.error_background[i],
-                                     '%.3f' % self.reference[i],
-                                     '%.3f' % self.error_reference[i],
-                                     '%.6f' % self.absorption[i],
-                                     '%.6f' % self.error_absorption[i]])
+                if not self.have_reference:
+                    writer.writerow(['wavelength', 'current data', 'current error',
+                                     'background', 'error background'])
+                    for i,wl in enumerate(wavelengths):
+                        writer.writerow(['%.1f' % wl, '%.3f' % self.mean_current[i],
+                                         '%.1f' % self.error_current[i],
+                                         '%.1f' % self.background[i],
+                                         '%.1f' % self.error_background[i]])
+                    return
+                if hasattr(self, 'absorption') and self.absorption is not None: 
+                    writer.writerow(['wavelength', 'current data', 'current error',
+                                     'background', 'error background', 'reference',
+                                     'error reference', 'absorption', 'error'])
+                    for i,wl in enumerate(wavelengths):
+                        writer.writerow(['%.1f' % wl, '%.3f' % self.mean_current[i],
+                                         '%.3f' % self.error_current[i],
+                                         '%.3f' % self.background[i],
+                                         '%.3f' % self.error_background[i],
+                                         '%.3f' % self.reference[i],
+                                         '%.3f' % self.error_reference[i],
+                                         '%.6f' % self.absorption[i],
+                                         '%.6f' % self.error_absorption[i]])
+                else:
+                    writer.writerow(['wavelength', 'current data', 'current error',
+                                     'background', 'error background', 'reference',
+                                     'error reference'])
+                    for i,wl in enumerate(wavelengths):
+                        writer.writerow(['%.1f' % wl, '%.3f' % self.mean_current[i],
+                                         '%.3f' % self.error_current[i],
+                                         '%.3f' % self.background[i],
+                                         '%.3f' % self.error_background[i],
+                                         '%.3f' % self.reference[i],
+                                         '%.3f' % self.error_reference[i]])
 
+:code:`tag csv-export`

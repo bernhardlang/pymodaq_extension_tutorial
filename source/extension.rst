@@ -394,4 +394,4 @@ The second argument of :code:`QSettings.value` is a default value which prevents
 
 Until now, the extension still does nothing more than a bare plugin can do. Features beyond will be introduced in the next chapter.
 
-:code:`params-to-settings`
+:code:`tag params-to-settings`

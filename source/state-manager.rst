@@ -20,10 +20,10 @@ This section covers the use of the state manager. It can be used to trigger acti
     main_config = Config()
     plugin_config = PluginConfig()
 
-    EXTENSION_NAME = 'ConfigAbsorption'
-    CLASS_NAME = 'ConfigAbsorption'
+    EXTENSION_NAME = 'StateManagerAbsorption'
+    CLASS_NAME = 'StateManagerAbsorption'
 
-    class ConfigAbsorption(Absorption):
+    class StateManagerAbsorption(Absorption):
 
         def start_background(self):
             self.data_valid = False
@@ -55,6 +55,8 @@ This section covers the use of the state manager. It can be used to trigger acti
 
 The code of :code:`take_background` is slightly longer than the version it overloads. However, the method :code:`shutter_ready` will not be used any more because :code:`StateManager.execute_entry()` only returns once the actions asked for in the state configuration have all completed.
 
-Launch the dashboard and load the :file:`absorption` experiment. The state manager permits now to create sets of configuration operations. Click on the New item on top of the right panel and enter :file:`background` as name. Upon a right click into the configuration area below select :file:`Add Special Configuation -> Actuator value`. Choose the dark shutter here and set the actuator value to zero. Activate the configuration once to get it saved (that's a bug-like trap!)
+Launch the dashboard, load the :file:`absorption` experiment and the :file:`StateManagerAbsorption` extension. The state manager permits now to create sets of configuration operations. Click on the New item on top of the right panel and enter :file:`background` as name. Upon a right click into the configuration area below select :file:`Add Special Configuation -> Actuator value`. Choose the dark shutter here and set the actuator value to zero. Activate the configuration once to get it saved (that's a bug-like trap!). Repeat the same for a state :file:`spectrum` which should set the dark shutter value to one. Note that the names given to the configuration have to literally match the corresponging names in the code above. 
 
 In terms of functionality, the program has not changed. Using the the state manager instead of steering the actuators directly just changes the way things are 'wired' together. However, used together with a state machine, this can be turned into a quite powerful tool to work on complex sequences.
+
+:code:`tag state-manager`
