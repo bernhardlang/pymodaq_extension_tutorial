@@ -1,5 +1,5 @@
-Watching a photochemical reaction, work in progress
-===================================================
+Work in Progress Watching a photochemical reaction
+==================================================
 
 Description and simulation of the experiment
 --------------------------------------------
