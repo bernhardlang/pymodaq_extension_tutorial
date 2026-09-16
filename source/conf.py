@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'PyMoDAQ extension tutorial'
+project = 'PyMoDAQ custom appplication and extension tutorial'
 copyright = '2026, Bernhard Lang'
 author = 'Bernhard Lang'
 release = '0.1'

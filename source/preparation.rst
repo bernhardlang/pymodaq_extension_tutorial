@@ -104,7 +104,7 @@ Similarly, there should be a 'DAQ1D/Plugin/Template'.
 
 A few words on the virtual environments may be worth mentioning here.
 
-* A commen problem in Linux environments is that python comes already with the system installation and is used for various tasks. However, no environments are set up by default. This may screw up things when python packages are installed as superuser but not using the system's package manager (like apt for Debian). The latter and the work of the distribution maintainers take care of version issues. However, when using :code:`sudo pip install ...` you are on your own. Even worse, you may already have done so in the past without being aware of possible problems. They will probably hit you now.
+* A commen problem in Linux environments is that Python comes already with the system installation and is used for various tasks. However, no environments are set up by default. This may screw up things when python packages are installed as superuser but not using the system's package manager (like apt for Debian). The latter and the work of the distribution maintainers take care of version issues. However, when using :code:`sudo pip install ...` you are on your own. Even worse, you may already have done so in the past without being aware of possible problems. They will probably hit you now.
 
 Therefore, use :code:`pip` only in virtual environments. Outside, always use the system's package manager instead!
 
@@ -138,4 +138,3 @@ If you want to compare your code with the code provided in the github repository
   $ git checkout preparation
 
 A hint :code:`tag preparation` on the tag to check out will be placed at every mile stone in this tutorial.
-

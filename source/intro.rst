@@ -9,7 +9,7 @@ Though this tutorial is about coding a PyMoDAQ extension and not a lecture in ph
 The simulated experiment
 ........................
 
-The simulated experiment used for this tutorial involves measuring the absorption of a liquid sample solution in a spctroscopic cell. Let's assume that we have dissolved a dye in some solvent. The dye molecules absorb light aroud a certain wavelength. The aim of the experiment is to determine the corresonding absorption spectrum. The intensity of the light transmitted to through the sample, :math:`I_\mathrm{trans}`, is given by Beer-Lambert's law
+The simulated experiment used for this tutorial involves measuring the absorption of a liquid sample solution in a spctroscopic cell. Let's assume that we have dissolved a dye in some solvent. The aim of the experiment is to determine the corresonding absorption spectrum. The intensity of the light transmitted to through the sample, :math:`I_\mathrm{trans}`, is given by Beer-Lambert's law
 
 .. math::
    I_\mathrm{trans} = I_0 \cdot 10^{-\varepsilon cl}
@@ -37,7 +37,7 @@ In a second step, the incident light intensity has to be determined. At the same
 In later chapters, the experiment will be extended to measure fluoresence spectra and finally to record the course of a photochemical reaction by measuring a series of absorption spectra as a function of time. But first things first.
 
 
-What wa are going to code
+What we are going to code
 .........................
 
 To interface and operate the experiment described in the previous section we'll need to control the spectro-photometer and the shutter. This involves writing a PyMoDAQ plugin for each of these devices. Controlling the flow of the experiment, i.e. measuring first the dark, then the incident intensity and finally the absorption, is the job of the extension to be written.

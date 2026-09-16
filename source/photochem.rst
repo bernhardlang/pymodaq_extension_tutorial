@@ -5,8 +5,9 @@ Description and simulation of the experiment
 --------------------------------------------
 
 In this chapter the experiment is extended to be able to monitor a photo-isomerisation reaction. Let's take azobenze as an example. It can exisit in two isomers, in trans and in cis form.
+
 .. image:: cis-trans.png
-   :scale: 15%
+   :scale: 25%
    :align: center
 
 The trans isomer is thermally more stable. Therefore, when left long enough in the dark, all molecules turn into the trans form. Upon illumination with blue light, a fraction undergoes an isomerisation to the cis form. The cis to trans back reaction is thermally activated with a rate of roughly :math:`10^{-6}`/s at room temperature. However, the back reaction can also take place after photo-excitation of the cis form.
@@ -100,7 +101,7 @@ Timing introduced into the controller
 Improved experimental procedure
 -------------------------------
 
-If you've got the possibility to perform the experiment in a real lab, you'll notice that the observed kinetics are quite faster than what the simulation tells. Why is that? Simply because the whitelight used for recording the absorption drives the photo-induced isomerisation as well. To avoid this problem, the exposure of the sample to probe light has to be minimised. However, simply lowering its intensity does not help much because the signal-to-noise ratio of the obtained absorption spectrum degrades with diminished light intensity. It is better to i) insert a shutter between lamp and sample which is open only during absorption measurements and ii) to adapt the measurement sequence to shape of the kinetics. The concentrations change rapidly at short times and slow down as time goes on. At later times it is sufficient to record spectra only now and then. In other words, the time grid for recording absorption spectra should have a logarithmic spacing. More precisely and since the recording time is not infinitely short, the measurement sequence should start with linearly spaced time steps until a certain limit and then continue logarithmically.
+If you've got the possibility to perform the experiment in a real lab, you'll notice that the observed kinetics are quite faster than what the simulation tells. Why is that? Simply because the whitelight used for recording the absorption drives the photo-induced isomerisation as well. To avoid this problem, the exposure of the sample to probe light has to be minimised. However, simply lowering its intensity does not help much because the signal-to-noise ratio of the obtained absorption spectrum degrades with diminished light intensity. It is better to i) insert a shutter between lamp and sample which is open only during absorption measurements and ii) to adapt the measurement sequence to the course of the kinetics. The concentrations change rapidly at short times and slow down as time goes on. At later times it is sufficient to record spectra only now and then. In other words, the time grid for recording absorption spectra should have a logarithmic spacing. More precisely and since the recording time is not infinitely short, the measurement sequence should start with linearly spaced time steps until a certain limit and then continue logarithmically.
 
 
 Improved experimental set-up
@@ -110,9 +111,28 @@ The following sketch shows the extension of the previously used arrangement. Usi
 
 .. image:: sketch-photochem.png
 
+
 This permits to correct for drifts of the lamp spectrum over the course of the experiment. However, it doesn't permit to automatically take a reference of the lamp spectrum :math:`R` because the two beam paths are not identic. :math:`R` has still to be recorded by manually inserting a pure sample solvent at the begin of the experiment. :math:`I_0`, the incident intensity monitored through the additional beam path, has to be recorded previous to the experiment as well. During the experiment and when needed, the shutters can be switched such that :math:`I_0^\prime`, the incident intensity during the experiment, can be re-measured. Without drifts one should have :math:`I_0^\prime=I_0`. The corrected absorption is then given by
 
 .. math::
    A(\lambda) = -\log_{10}\left(\frac S{I^\prime}\cdot\frac{I_0}R\right).
 
 The idea is to introduce a parameter defining the time span after which the loop recording absorption spectra has to be temporally left to record a renewed lamp spectum. Of course, we could implement all this into the controller since the only 'feedback' needed here is the time stamp from the recorded spectrum which tells when renewing the lamp spectrum is due. However, any other 'decision maker' would be hard to implement within the controller without breaking PyMoDAQ's modular design. Futhermore, a simple exchange of the spectro-photometer from model XYZ to model :math:`\alpha\beta\gamma` would ask for re-implementing all the same in the corresponding controller. Certainly, a Python mixin could ease that. However, it would still introduce modularity at other places than forseen by PyMoDAQ. It is time to address the sequencer.
+
+
+.. code-block::
+
+        def set_shutter_value(self, axis, value):
+	    if axis == 'excitation' and value != self.shutter[axis].get_value():
+		if value == 1:
+		    self.on_since = time.time()
+		else:
+		    self.accumulated_on += time.time() - self.on_since
+	    self.shutter[axis].move_at(value)
+
+	@property
+	def absorption(self):
+	    return self._absorption * np.exp(-self.accumulated_on * self.rate)
+
+
+So far, so good. However, he approach shown here has an important drawback when using read hardware real hardware. When exchanging the spectro-photometer for another model, the plugin of the new instrument has to be modified because the timings are baked into the controller. The next chapter shows how to solve the problem in a more modular way.

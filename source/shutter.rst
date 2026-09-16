@@ -42,7 +42,7 @@ The only thing which matters in the context of this tutorial is that the corresp
 At present, we need only a single shutter. More devices will follow later on. The simulation has to know whether the sample cuvette contains the real sample or solvent only. This is taken care of by the flag :code:`with_sample` which we had already introduced in the previous chapter.
 
 .. code-block::
-   :emphasize-lines: 6,10-
+   :emphasize-lines: 5,10-
 
     @dataclass
     class MockSpectrograph:
