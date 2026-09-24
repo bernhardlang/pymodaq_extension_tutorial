@@ -78,14 +78,14 @@ To be able to test the newly constructed GUI, two methods populated later have t
     ...
         def setup_actions(self):
             return
-            """Method where to create actions to be subclassed. Mandatory"""
+            """Method where to create actions to be sub-classed. Mandatory"""
     ...
         def connect_things(self):
             return
             """Connect actions and/or other widgets signal to methods"""
 
 
-To make PyMoDAQ aware of the newly created extension we have to re-install the package in ediatble mode which has to be done in the root directory of the package::
+To make PyMoDAQ aware of the newly created extension we have to re-install the package in editable mode which has to be done in the root directory of the package::
 
   $ cd /path/to/extension-plugin-code/pymodaq_plugins_tutorial_extension
   $ pip install -e .
@@ -105,9 +105,9 @@ However, it hasn't got any functionality yet. In case that our newly created ext
   $ cd src/pymodaq_plugins_tutorial_extension/extensions
   $ python absorption_extension.py
 
-If python throws any error at you, that message should tell where the problem is. In case of success, the bare extension window should pop up. Another source of information can be the log file which you may scan for error messages.
+If Python throws any error at you, that message should tell where the problem is. In case of success, the bare extension window should pop up. Another source of information can be the log file which you may scan for error messages.
 
-:code:`tag bare-extension`
+:code:`branch bare-extension`
 
 To get things working in a preliminary and primitive fashion we add a method that accepts data from the spectrograph's 1D viewer plugin. It simply extracts the raw spectrometer data from the received :code:`DataToExport` object and displays that in the viewer.
 
@@ -121,7 +121,7 @@ To get things working in a preliminary and primitive fashion we add a method tha
             spectro_data = data.get_data_from_dim('Data1D')[0]
             self.spectrum_viewer.show_data(spectro_data)
 
-Note that this assumes that the data received from the plugin contains a set of one dimensional data and that the first (or only) one dimensional array therein contains the intensity data from the spectrometer. This is where we may hit the limits for creating a generic application. A plugin written by someone alse and delivering its data in a different form may not be working here. :code:`DataToExport` comes with quite a list of methods which permit to extract contained data identified by names and labels. Having a general spectrometer application in mind, one may want to retrieve first a data set, analyse its content and give the user the choice what data item should be taken. However and for the time being, we know what's in there and can just go on.
+Note that this assumes that the data received from the plugin contains a set of one dimensional data and that the first (or only) one dimensional array therein contains the intensity data from the spectrometer. This is where we may hit the limits for creating a generic application. A plugin written by someone else and delivering its data in a different form may not be working here. :code:`DataToExport` comes with quite a list of methods which permit to extract contained data identified by names and labels. Having a general spectrometer application in mind, one may want to retrieve first a data set, analyse its content and give the user the choice what data item should be taken. However and for the time being, we know what's in there and can just go on.
 
 Once the dashboard has been loaded with the experiment, the devices defined in the experiment can be registered with the modules manager. This allows to obtain a reference to the detector which can be connected to the data display. The mechanism behind the scene is that once the method :code:`self.detector.grab()` is called, PyMoDAQ quests acquisition on the device in a loop. For each retrieved data item the plugin emits the signal :code:`grab_done_signal` which we have to connect to the extension's method :code:`take_data`.
 
@@ -144,7 +144,7 @@ Once the dashboard has been loaded with the experiment, the devices defined in t
                 Axis(label='Wavelength', units='nm',
                      data=self.detector.controller.wavelengths, index=0)
 
-Note that there's an issue here how to identify the device of choice. :code:`ModulesManager.get_mod_from_name` needs to get the name  exactly as we have defined it in the experiment. However, how should a non-developping user know what to enter there, unless having been specificly instructed? We'll cover that later with an appropriated configuration dialog. For now, we'll have to pay attention that the two names match exactly.
+Note that there's an issue here how to identify the device of choice. :code:`ModulesManager.get_mod_from_name` needs to get the name  exactly as we have defined it in the experiment. However, how should a non-developing user know what to enter there, unless having been specifically instructed? We'll cover that later with an appropriated configuration dialog. For now, we'll have to pay attention that the two names match exactly.
 
 Two methods take care of starting and ending the acquisition.
 
@@ -173,11 +173,11 @@ To make them accessible from the GUI, two methods predefined in the template whi
         self.connect_action('acquire', self.start_acquiring)
         self.connect_action('stop', self.stop_acquiring)
 
-The extension has now a second tool bar from which the acquistion can be started and stopped.
+The extension has now a second tool bar from which the acquisition can be started and stopped.
 
 .. image:: extension-with-toolbar.png
 
-When you start the acquistion, the extension does nothing more than what is already happening in the panel named "Spectrometer MockSpectro" in the dashboard.
+When you start the acquisition, the extension does nothing more than what is already happening in the panel named "Spectrometer MockSpectro" in the dashboard.
 
 Stopping acquisition before it has been started doesn't make much sense. PyMoDAQ still handles the situation correctly. However, necessary actions unknown to PyMoDAQ may not do so. It is therefore better to activate only those actions which actually make sense.
 
@@ -198,9 +198,9 @@ Stopping acquisition before it has been started doesn't make much sense. PyMoDAQ
         self._actions["acquire"].setEnabled(True)
         self._actions["stop"].setEnabled(False)
 
-Note that this introduces a bug. The dasboard is of course not aware of the functionality created in the extension. When starting or stopping the acquisition from the dashboard, the tool bar buttons in the extension are not updated. Again, this will be addressed later on.
+Note that this introduces a bug. The dashboard is of course not aware of the functionality created in the extension. When starting or stopping the acquisition from the dashboard, the tool bar buttons in the extension are not updated. Again, this will be addressed later on.
 
-:code:`tag extension-with-data`
+:code:`branch extension-with-data`
 
 You may have noticed while playing around with the extension that it opens up with a size which is not very suitable. And changes to the window are not preserved over quitting the dashboard. Let's make changes so that the GUI geometry stays permanently. Two functions, inverse of each other, take care of writing the current parameter values and geometry settings to a configuration file and reading them back. This is done here in a preliminary fashion using Qt's settings mechanism. **@PyMoDAQxperts:** please replace this with more PyMoDAQonian style ...
 
@@ -218,7 +218,7 @@ You may have noticed while playing around with the extension that it opens up wi
             try:
                 self.dockarea.restoreState(state)
             except: # pyqtgraph's state restoring is not very fail safe
-                # erease inconsistent settings in case pyqtgraph trips
+                # erase inconsistent settings in case pyqtgraph trips
                 self.qt_settings.setValue("dockarea", None)
 
 To make this work, the two functions have to be hooked up into the initialisation and shut down procedures.
@@ -240,11 +240,11 @@ To make this work, the two functions have to be hooked up into the initialisatio
     def quit_fun(self):
         self.write_settings(self.qt_settings)
 
-The first of the newly introduced lines in the init method returns a path to a subfolder :file:`gui-state` located in the user's PyMoDAQ configuration folder. If that subfolder doesn't exist yet it is created. GUI settings can go in there now. Have a try, resizing the extension window should now persist over shutting down and restarting the extension and the dashboard. Note that this geometry sub-section may not be necessary in future versions of PyMoDAQ. An ongoing pull request may incorporate the feature into the custom app base class.
+The first of the newly introduced lines in the init method returns a path to a sub folder :file:`gui-state` located in the user's PyMoDAQ configuration folder. If that sub folder doesn't exist yet it is created. GUI settings can go in there now. Have a try, resizing the extension window should now persist over shutting down and restarting the extension and the dashboard. Note that this geometry sub-section may not be necessary in future versions of PyMoDAQ.
 
-:code:`tag geometry`
+:code:`branch geometry`
 
-The paramaters controlling the spectrometer are all accessible in the experiment configuration and could be changed via the detector's widget in the dashboard, or using the configurator (try this out yourself as an exercice). However, to ease operation, a set of most important parameters shall be displayed in the main window of the spectrometer application. They are declared in the preamble of the extension class in the same fashion as device parameters in the preamble of a plugin class. All parameters defined in :code:`params[]` are made avaliable in :code:`self.settings_tree` by PyMoDAQ's start-up machinery.
+The parameters controlling the spectrometer are all accessible in the experiment configuration and could be changed via the detector's widget in the dashboard, or using the configurator (try this out yourself as an exercise). However, to ease operation, a set of most important parameters shall be displayed in the main window of the spectrometer application. They are declared in the preamble of the extension class in the same fashion as device parameters in the preamble of a plugin class. All parameters defined in :code:`params[]` are made available in :code:`self.settings_tree` by PyMoDAQ's start-up machinery.
 
 .. code-block::
    :emphasize-lines: 3-14,19-21,25-
@@ -351,9 +351,9 @@ The parameter ``Average`` has not yet any effect. Let's change that.
 
 Zooming in on the error curve permits to see how the error scales now with :math:`\sqrt{n_\mathrm{average}}`.
 
-:code:`tag averaging`
+:code:`branch averaging`
 
-Once again, changes on the parameters do not survive quitting. One could write them to and recover them from a config file one by one. However, expecting the number of parameters to increase with time, it will be advantageous to prepare for that now. Since the device params are a dict inside a dict inside an array, it is easier to declare them in a separate list 
+Once again, changes on the parameters do not survive quitting. One could write them to and recover them from a configuration file one by one. However, expecting the number of parameters to increase with time, it will be advantageous to prepare for that now. Since the device parameters are a dict inside a dict inside an array, it is easier to declare them in a separate list 
 
 .. code-block::
    :emphasize-lines: 3-15,21-23,27-
@@ -394,4 +394,4 @@ The second argument of :code:`QSettings.value` is a default value which prevents
 
 Until now, the extension still does nothing more than a bare plugin can do. Features beyond will be introduced in the next chapter.
 
-:code:`tag params-to-settings`
+:code:`branch params-to-settings`

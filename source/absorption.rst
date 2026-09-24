@@ -99,15 +99,15 @@ Two new actions are needed
                             toolbar=self.toolbar)
         self._actions["stop"].setEnabled(False)
 
-After deleting again the gui settings file, the extension should now look like
+After deleting again the GUI settings file, the extension should now look like
 
 .. image:: absorption-extension.png
 
 If you need icons which are not present in the icon library (:file:`pymodaq_gui/resources/icon_library`), you'll have to select suitable ones at https://fonts.google.com/icons. To be able to add them to PyMoDAQ's icon library you have to fork the PyMoDAQ repository, add the icons' names to the list in :file:`pymodaq_gui/resources/icons.toml` and follow the instructions therein and in :file:`pymodaq_gui/resources/check_icons_dev.py`. After a pull request, the additional icons will be available to all PyMoDAQ users. During development it is sufficient to install the pymodaq_gui package in editable mode within your working environment and apply these changes there.
 
-:code:`tag updated-gui`
+:code:`branch updated-gui`
 
-The newly defined actions do not yet trigger any real operations. However, we should prepare some book keeping to prevent exceptions being raised due to missing properties. In the 'Raw' mode, neither background nor reference data are needed. Both new actions should therefore be disabled in that mode. On the other hand, when selecting 'Background Subtracted', a measurement is not possible until the background has been recorded. Likewise, an absorption measurement is possible only once both background and reference have been determined. The follwoing routine takes care of the correspong activation and deactivation operations.
+The newly defined actions do not yet trigger any real operations. However, we should prepare some book keeping to prevent exceptions being raised due to missing properties. In the 'Raw' mode, neither background nor reference data are needed. Both new actions should therefore be disabled in that mode. On the other hand, when selecting 'Background Subtracted', a measurement is not possible until the background has been recorded. Likewise, an absorption measurement is possible only once both background and reference have been determined. The following routine takes care of the corresponding activation and deactivation operations.
 
 .. code-block::
 
@@ -132,7 +132,7 @@ The newly defined actions do not yet trigger any real operations. However, we sh
                                   action_states[mode]):
                 self._actions[name].setEnabled(state)
 
-To make this work, we need to declare the flags at initialisation and to call this method whenever the measurement mode or the state of the flags has changed. Some other parameter changes may equally call for an update of the actions. E.g. the background signal depends on the integration time. When the latter is changed we have to invalidate the former. We also have to distinguish between normal acqusition and acquisition of background and reference data. Furthermore, while the shutter is moving or we wait for the user to exchange samples, any incoming data should be discarded.
+To make this work, we need to declare the flags at initialisation and to call this method whenever the measurement mode or the state of the flags has changed. Some other parameter changes may equally call for an update of the actions. E.g. the background signal depends on the integration time. When the latter is changed we have to invalidate the former. We also have to distinguish between normal acquisition and acquisition of background and reference data. Furthermore, while the shutter is moving or we wait for the user to exchange samples, any incoming data should be discarded.
 
 .. code-block::
    :emphasize-lines: 6-9,16-20,25,26,31-
@@ -197,7 +197,7 @@ Adjusting the actions may not be necessary each time some parameter has changed.
                 else:
                     self.take_reference(self.mean_current, self.error_current)
 
-Spectral regions where the level of the whitelight lamp is low may induce problems. In such regions one may obtain negative signals through fluctuations of the background and in consequence, the logarithm is not defined any more. To avoid :code:`NaN` values which may screw up the graphical display, a mask of validity is kept together with the reference signal.
+Spectral regions where the level of the white light lamp is low may induce problems. In such regions one may obtain negative signals through fluctuations of the background and in consequence, the logarithm is not defined any more. To avoid :code:`NaN` values which may screw up the graphical display, a mask of validity is kept together with the reference signal.
 
 .. code-block::
 
@@ -239,7 +239,7 @@ Spectral regions where the level of the whitelight lamp is low may induce proble
             self.background_viewer.show_data(dfp)
             self.dark_shutter.move_abs(1200)
 
-Recording the reference in the simulatged environment needs a little tweak. With the real machine, the user exchanges the sample with a pure solvent cuvette. In the present simulation this has to be done by software. To this end we try to set the controller's property :code:`with_sample` and ignore the corresponding exception in case that this fails because the real world device controller has no such property.
+Recording the reference in the simulated environment needs a little tweak. With the real machine, the user exchanges the sample with a pure solvent cell. In the present simulation this has to be done by software. To this end we set the controller's property :code:`with_sample`. In case of a real-worl device, that added but unused property won't do any harm.
 
 .. code-block::
 
@@ -257,10 +257,7 @@ Recording the reference in the simulatged environment needs a little tweak. With
                                   axes=[self.x_axis])
             self.spectrum_viewer.show_data(dfp)
             self.raw_data_viewer.show_data(dfp)
-            try:
-                self.detector.controller.with_sample = True
-            except:
-                pass
+            self.detector.controller.with_sample = True
             self.adjust_actions()
 
         def show_data(self, mean, error, name, raw=None, reference=None):
@@ -306,7 +303,7 @@ To record the background, the shutter has to be closed. The take-background acti
             else: # idle mode
                 self.adjust_actions()
 
-Similar for the reference measurement, just that instead of closing a shutter we have to ask the user to insert a sample containing pure solvent. And again the tweak on the simulation controller.
+Similar for the reference measurement, just that instead of closing a shutter we have to ask the user to insert a sample containing pure solvent.
 
 .. code-block::
 
@@ -321,10 +318,7 @@ Similar for the reference measurement, just that instead of closing a shutter we
                                      | QMessageBox.StandardButton.Cancel)
             if result != QMessageBox.Ok:
                 return
-            try:
-                self.detector.controller.with_sample = False
-            except:
-                pass
+            self.detector.controller.with_sample = False
             self.acquisition_mode = 'reference'
             self.n_average = self.settings['ref_averaging']
             self.n_samples = 0
@@ -345,9 +339,9 @@ To make things operative, the actions have be connected to the corresponding met
             self.connect_action('background', self.start_background)
             self.connect_action('reference', self.start_reference)
 
-:code:`tag full-absorption`
+:code:`branch full-absorption`
 
-To finish up this section we add a simple method to export data in csv format. Handling H5 storage is covered in a later chapter.
+To finish up this section we add a simple method to export data in CSV format. Handling H5 storage is covered in a later chapter.
 
 .. code-block::
    :emphasize-lines: 5,6,10,13-
@@ -447,4 +441,4 @@ And finally a method for the data export
                                          '%.3f' % self.reference[i],
                                          '%.3f' % self.error_reference[i]])
 
-:code:`tag csv-export`
+:code:`branch csv-export`

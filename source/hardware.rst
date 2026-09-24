@@ -1,15 +1,15 @@
 Simulating a spectro-photometer
 ===============================
 
-In this section we will write the code for controlling a spectro-photometer. Let us begin with a brief comment on simulating devices. Simulating things is a useful starting point here because we avoid communication issues with real devices for now. On top of that, no hardware is needed and the development can take place anywhere where an internet connection is available (the latter for installing missing stuff and searching for help when it doesn't-doesn't). However, it can be very useful to keep simulation capabilities in place even when everything works fine with real hardware.
+In this section we will write the code for controlling a spectro-photometer. Let us begin with a brief comment on simulating devices. Simulating things is a useful starting point in this tutorial because we avoid communication issues with real devices for now. On top of that, no hardware is needed and the development can take place anywhere where an internet connection is available (the latter for installing missing stuff and searching for help when it doesn't-doesn't). However, it can be very useful to keep simulation capabilities in place even when everything works fine with real hardware.
 
-* There might be only a single and expensive device around and your colleagues are using it at present for a longer measurement campain. With a simulated device you may happily continue coding.
-* Suppose that the experiment has a surprising result. Being able not only to simulate some default values but the outcome of an entire experiment while using the whole chain from the simulated device over PyMoDAQ's functionality to data treatment software may be a very helpful quality control. Is the result surprising because a mistake happened during the experiment? during data acquision? during treatment? *or did we actually discover something new??*
+* There might be only a single and expensive device around and your colleagues are using it at present for a longer measurement campaign. With a simulated device you may happily continue coding.
+* Suppose that the experiment has a surprising result. Being able not only to simulate some default values but the outcome of an entire experiment while using the whole chain from the simulated device over PyMoDAQ's functionality to data treatment software may be a very helpful quality control. Is the result surprising because a mistake happened during the experiment? during data acquisition? during treatment? *or did we actually discover something new??*
 * You may learn a lot about your experiment and its instrumentation by making sure that at the tail of the chain you are actually getting back exactly what you have put into the simulation at its head. Remember that the only way a sample can talk to you in a spectroscopic experiment is by means of signal photons it emits. These and the carried information pass by a multitude of optical elements, detectors, ADC converters, data treatment of all sorts etc. Quite some Chinese whispers to master.
 
-To understand the spectroscopic peculiarities behind the code in this section, one has to dive into the detection of visible light to quite some extent. For those who don't want to spend time on these details, you may just skip this section until :ref:`here <controller-ready>`, where the checked out code should readily reproduce the figures shown below. Just keep in mind as an advice, once you've got together a draft code of the experiment you want to control, it is probably still a good idea to simulate that experiment, instead of the one presented here where the details don't matter to you.
+To understand the spectroscopic peculiarities behind the code in this section, one has to dive into the detection of visible light to quite some extent. For those who don't want to spend time on these details, you may just skip this section until :ref:`here <controller-ready>`, where the checked-out code should readily reproduce the figures shown below. Just keep in mind as an advice, once you've got together a draft code of the experiment you want to control, it is probably still a good idea to simulate that experiment, instead of the one presented here where the details don't matter to you.
 
-We start with a controller situated in the hardware directory of the plugin (:file:`src/pymodaq_plugins_tutorial_extensions/hardware`). When using real hardware, an instance of the controller is managing the communication with the device. We use the same structure here because a couple of simulated instruments will have to work together, sharing common "knowledge" about the state of the simulated experiment. We use here a :code:`dataclass` to avoid quite some boiler plate code at initialisation. Create a file :file:`controller.py` in the hardware directory and fill in the following code
+We start with a controller situated in the hardware directory of the plugin (:file:`src/pymodaq_plugins_tutorial_extensions/hardware`). When using real hardware, an instance of the controller is managing the communication with the device. In the absence of real hardware that wouldn't be necessary. Nevertheless, we use the same structure here because a couple of simulated instruments will have to work together, sharing common "knowledge" about the state of the simulated experiment. And that will happen in the controller which is going to be shared by all plugins to be written. We use here a :code:`dataclass` to avoid quite some boiler plate code at initialisation. Create a file :file:`controller.py` in the hardware directory and fill in the following code
 
 .. code-block:: python
 
@@ -52,6 +52,8 @@ To test whether this works correctly we add some code at the end of the file whi
 
 .. code-block:: python
 
+  ...
+
   if __name__ == '__main__':
       import matplotlib.pyplot as plt
       spectrograph = MockSpectrograph()
@@ -65,7 +67,7 @@ The result should look like
 
 .. image:: simu-spect-abs.png
 
-:code:`tag spectra`
+:code:`branch spectra`
 
 Next comes the method which is used to generate realistic spectroscopic data.
 Without light exposure detectors show some dark signal which is mostly coming from thermal noise. Its amplitude is typically proportional to the integration time. It comes in units of LSB (least significant bit), i.e. in increments of the ADC. In case the signal gets too strong, the ADC signal saturates at the highest possible value (e.g. 65535 for a 16 bit ADC). The simulated signal is therefore cut to that level. Together with the data we send a time stamp.
@@ -96,11 +98,11 @@ Without light exposure detectors show some dark signal which is mostly coming fr
 
 .. image:: background.png
 
-:code:`tag background`
+:code:`branch background`
 
 Once the probe light passes through the sample cell, but filled only with solvent, the light induces a photo current in the detector which is accumulated as charges in a capacitor during the integration time. The natural unit of the detected quantity would therefore be the number of collected photo electrons. However, the read-out is performed by discharging the capacitor through a resistance and measuring the tension across this resistance by means of an ADC. Therefore, the property :code:`light_level` is given in units of ADC LSB--because that is what the user sees on the plot showing the camera read-out--with the conversion factor :code:`pe_per_lsb` (photo electrons per LSB).
 
-The detected signal exhibits a fluctuation due to counting statistics. Other types of fluctuations like a variation of the overall amplitude due to correlated thermal noise could be implemented here as well. For the purpose of demonstration we'll leave it at the level of counting statistics. Keep in mind that these counting statistics are based on the number of photo electrons collected per pixel. Before determining the spread of the Poisson distribution, the signal amplitude has to be converted into that number. And once the random numbers have been generated, they have to be converted back to ADC LSB.
+The detected signal exhibits a fluctuation due to counting statistics. Other types of fluctuations like a variation of the overall amplitude due to correlated thermal noise could be implemented here as well. For the purpose of demonstration we'll leave it at the level of counting statistics. Keep in mind that these counting statistics are based on the number of photo electrons collected per pixel. Before determining the spread of the corresponding Poisson distribution, the signal amplitude has to be converted into that number. And once the random numbers have been generated, they have to be converted back to ADC LSB.
 
 .. code-block:: python
    :emphasize-lines: 4-7,15-
@@ -130,7 +132,7 @@ The detected signal exhibits a fluctuation due to counting statistics. Other typ
 
 .. image:: reference.png
 
-:code:`tag signal-and-background`
+:code:`branch signal-and-background`
 
 After having inserted an absorbing sample, the intensity of the light transmitted through the sample is reduced according to 
 
@@ -182,4 +184,4 @@ And finally, calculating the absorption from these data, the result should look 
 
 .. _controller-ready:
 
-:code:`tag controller-ready`
+:code:`branch controller-ready`

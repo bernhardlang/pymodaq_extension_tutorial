@@ -1,7 +1,7 @@
 Shutter plugin
 ==============
 
-The shutter used in this experiment is a low-cost device based on a pulse-width modulation (PWM) driven servo for modeling which is controlled by an Arduino board. An anodised blade fixed to the servo's steerer blocks the light beam when placed accordingly
+The shutter used in this experiment is a low-cost device based on a pulse-width modulation (PWM) driven servo for modeling which is controlled by an Arduino board. An anodised blade fixed to the servo's head blocks the light beam when placed accordingly
 
 .. image:: Servo-motor-circuit.png
 
@@ -39,7 +39,7 @@ The only thing which matters in the context of this tutorial is that the corresp
 	def is_closed(self):
 	    return abs(self._current_value - self.closed_value) <= self.epsilon
 
-At present, we need only a single shutter. More devices will follow later on. The simulation has to know whether the sample cuvette contains the real sample or solvent only. This is taken care of by the flag :code:`with_sample` which we had already introduced in the previous chapter.
+At present, we need only a single shutter. More devices will follow later on. The simulation has to know whether the sample cell contains the real sample or solvent only. This is taken care of by the flag :code:`with_sample` which we had already introduced in the previous chapter.
 
 .. code-block::
    :emphasize-lines: 5,10-
@@ -183,4 +183,4 @@ an actuator window should open which looks like follows (potentially after a man
 
 .. image:: actuator.png
 
-:code:`tag shutter-plugin`
+:code:`branch shutter-plugin`
