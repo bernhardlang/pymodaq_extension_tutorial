@@ -365,7 +365,7 @@ To finish up this section we add a simple method to export data in CSV format. H
             self.affect_to('save', file_menu)
             file_menu.addSeparator()
 
-And finally a method for the data export 
+The H5 format is PyMoDAQ's preferred way of data storage. However, for the sake of simplicty and not to overload this chapter, we add here a method for exporting the data in CSV format. PyMoDAQ's viewers aready have such functionality on board. But we'd like to have all relevant data and error in one file. Exporting data in H5 (and re-importing them in an appropriate reader) will be covered in a further chapter.
 
 .. code-block::
 
@@ -444,4 +444,30 @@ And finally a method for the data export
                                          '%.3f' % self.reference[i],
                                          '%.3f' % self.error_reference[i]])
 
+And to make this work we finally have to add some code handling actions and icons
+
+.. code-block::
+   :emphasize-lines: 6,7,15,19
+
+    def setup_actions(self):
+        ...
+        self.add_action('reference', 'Take Reference', 'lightbulb',
+                        "Take Reference", checkable=False,
+                        toolbar=self.toolbar)
+        self.add_action('save', 'Save', 'SaveAs', "Save current data",
+                        checkable=False, toolbar=self.toolbar)        
+        self._actions["stop"].setEnabled(False)
+    ...
+    def adjust_actions(self):
+    ...
+        for name,state in zip(["acquire", "background", "reference"],
+                              action_states[mode]):
+            self._actions[name].setEnabled(state)
+        self._actions['save'].setEnabled(self._actions['acquire'].isEnabled())
+    ...
+    def connect_things(self):
+        ...
+        self.connect_action('save', self.save_current_data)
+
+                                     
 :code:`branch csv-export`
