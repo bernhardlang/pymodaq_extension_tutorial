@@ -60,21 +60,21 @@ The GUI has also to be updated. It is always a good idea to display all data ent
         ...
         self.spectrum_label = DockLabel("Current Data")
         ...
-        raw_data_dock = Dock('Raw Data')
+        raw_data_dock = gutils.Dock('Raw Data')
         self.docks['raw-data'] = \
             self.dockarea.addDock(raw_data_dock, "bottom",
                                   self.docks['settings'])
-        raw_data_widget = QWidget()
+        raw_data_widget = QtWidgets.QWidget()
         self.raw_data_viewer = Viewer1D(raw_data_widget)
         self.raw_data_viewer.toolbar.hide()
 
         raw_data_dock.addWidget(raw_data_widget)
 
-        background_dock = Dock('Background')
+        background_dock = gutils.Dock('Background')
         self.docks['background'] = \
             self.dockarea.addDock(background_dock, "bottom",
                                   self.docks['raw-data'])
-        background_widget = QWidget()
+        background_widget = QtWidgets.QWidget()
         self.background_viewer = Viewer1D(background_widget)
         background_dock.addWidget(background_widget)
         self.background_viewer.toolbar.hide()
@@ -169,6 +169,7 @@ To make this work, we need to declare the flags at initialisation and to call th
             self.detector.stop_grab()
             self.acquisition_mode = 'idle'
             self.adjust_actions()
+            ...
 
 Adjusting the actions may not be necessary each time some parameter has changed. However, it is safer just to do so. Data coming in from the plugin have now to be handled in different ways depending on the acquisition mode. 
 
@@ -196,6 +197,8 @@ Adjusting the actions may not be necessary each time some parameter has changed.
                     self.take_background(self.mean_current, self.error_current)
                 else:
                     self.take_reference(self.mean_current, self.error_current)
+
+            # remove the remaining rest of the method 
 
 Spectral regions where the level of the white light lamp is low may induce problems. In such regions one may obtain negative signals through fluctuations of the background and in consequence, the logarithm is not defined any more. To avoid :code:`NaN` values which may screw up the graphical display, a mask of validity is kept together with the reference signal.
 

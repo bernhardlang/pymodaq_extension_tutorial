@@ -139,7 +139,8 @@ That data is wrapped in :code:`DataFromPlugins` and :code:`DataToExport` so that
 					      data=[dfp_spectrum, dfp_time_stamp]))
 
 	def stop(self):
-	    pass
+            """Stop the current grab hardware wise if necessary"""
+ 	    pass
 
     if __name__ == '__main__':
 	main(__file__)
@@ -169,6 +170,11 @@ A bare plugin window should open
 
 .. image:: plugin-test.png
 
-and should display simulated data when pressing the grab button (the left-right arrows in the tool bar). 
+and should display simulated data when pressing the grab button (the left-right arrows in the tool bar). A few debugging hints in case that this does not happen:
+
+* Double check the naming of the plugin classes for upper and lower case.
+* Insert a breakpoint in the plugin's :code:`ini_stage` or :code:`ini_detector` method and execute the code step by step to catch the line where the initialisation fails.
+* If the plugin doesn't event get to execute that method or crashes when clicking the connect icon, check the log file for error messages (:file:`~/.pymodaq/log/pymodaq.log`).
+  
 
 :code:`branch spectro-plugin`

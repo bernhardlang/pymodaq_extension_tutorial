@@ -32,16 +32,16 @@ Now load the renamed file and adapt the names close to the top of the file accor
     plugin_config = PluginConfig()
 
     EXTENSION_NAME = 'Absorption'
-    CLASS_NAME = 'Absorption'
+    CLASS_NAME = 'AbsorptionExtension'
 
-    class Absorption(CustomExt):
+    class AbsorptionExtension(CustomExt):
     ...
 
 The initialisation of the instance of the absorption extension can be left untouched for now.
 
 .. code-block::
 
-    class Absorption(CustomExt):
+    class AbsorptionExtension(CustomExt):
     ...
         def __init__(self, parent: gutils.DockArea, dashboard):
             super().__init__(parent, dashboard)
@@ -53,16 +53,16 @@ The main GUI area of the application is accessible through the instance variable
 
 .. code-block::
 
-    from pymodaq_gui.utils.dock import Dock, DockLabel
+    from pymodaq_gui import utils as gutils
     from pymodaq_gui.plotting.data_viewers.viewer1D import Viewer1D
     ...
-    class Absorption(CustomExt):
+    class AbsorptionExtension(CustomExt):
     ...
         def setup_docks(self):
             self.create_dashboard_toolbar()
 
-            self.spectrum_label = DockLabel("Raw Data")
-            spectrum_dock = Dock('Data', label=self.spectrum_label)
+            self.spectrum_label = gutils.dock.DockLabel("Raw Data")
+            spectrum_dock = gutils.Dock('Data', label=self.spectrum_label)
             self.docks['spectrum'] = self.dockarea.addDock(spectrum_dock)
             spectrum_widget = QtWidgets.QWidget()
             self.spectrum_viewer = Viewer1D(spectrum_widget)
@@ -74,7 +74,7 @@ To be able to test the newly constructed GUI, two methods populated later have t
 .. code-block::
    :emphasize-lines: 4,8
 
-    class Absorption(CustomExt):
+    class AbsorptionExtension(CustomExt):
     ...
         def setup_actions(self):
             return
@@ -94,18 +94,18 @@ The dashboard may now be launched. The command line switch -x tells PyMoDAQ to d
 
 .. code-block::
 
-   $ dashboard -x absorption
+   $ dashboard -x absorption -e Absorption
 
 The list of extensions should contain an entry "Absorption". After starting it, a window should pop up which looks like the following
 
 .. image:: bare-extension.png
 
-However, it hasn't got any functionality yet. In case that our newly created extension doesn't show up in the list, most likely some typo or messed up indentation prevents the module from being loaded. To check that, you may run the extension code directly::
+However, it hasn't got any functionality yet. In case that our newly created extension doesn't show up in the list, most likely some typo or messed-up indentation prevents the module from being loaded. To check that, you may run the extension code directly::
 
   $ cd src/pymodaq_plugins_tutorial_extension/extensions
   $ python absorption_extension.py
 
-If Python throws any error at you, that message should tell where the problem is. In case of success, the bare extension window should pop up. Another source of information can be the log file which you may scan for error messages.
+If Python throws any error at you, that message should tell where the problem is. In case of success, the bare extension window should pop up. Another source of information can be the log file which you may scan for error messages. Did you catch the error in the :code:`main()` function at the end of the extension file?
 
 :code:`branch bare-extension`
 
@@ -115,7 +115,7 @@ To get things working in a preliminary and primitive fashion we add a method tha
 
     from pymodaq.utils.data import DataToExport
     ...
-    class Absorption(CustomExt):
+    class AbsorptionExtension(CustomExt):
     ...
         def take_data(self, data: DataToExport):
             spectro_data = data.get_data_from_dim('Data1D')[0]
@@ -126,11 +126,12 @@ Note that this assumes that the data received from the plugin contains a set of 
 Once the dashboard has been loaded with the experiment, the devices defined in the experiment can be registered with the modules manager. This allows to obtain a reference to the detector which can be connected to the data display. The mechanism behind the scene is that once the method :code:`self.detector.grab()` is called, PyMoDAQ quests acquisition on the device in a loop. For each retrieved data item the plugin emits the signal :code:`grab_done_signal` which we have to connect to the extension's method :code:`take_data`.
 
 .. code-block::
+   :emphasize-lines: 1
 
     from pymodaq.utils.data import DataToExport, Axis
     from pymodaq.utils.managers.modules.utils import ModuleType
     ...
-    class Absorption(CustomExt):
+    class AbsorptionExtension(CustomExt):
     ...
         def do_things_after_experiment_set(self, experiment_name: str):
             self.modules_manager.detectors_all = \
@@ -150,7 +151,7 @@ Two methods take care of starting and ending the acquisition.
 
 .. code-block::
 
-    class Absorption(CustomExt):
+    class AbsorptionExtension(CustomExt):
     ...
         def start_acquiring(self):
             self.detector.grab()
@@ -206,7 +207,7 @@ You may have noticed while playing around with the extension that it opens up wi
 
 .. code-block::
 
-    def write_settings(self, qt_settings):
+   def write_settings(self, qt_settings):
         qt_settings.setValue("geometry", self.mainwindow.saveGeometry())
         qt_settings.setValue("dockarea", self.dockarea.saveState())
 
@@ -224,9 +225,10 @@ You may have noticed while playing around with the extension that it opens up wi
 To make this work, the two functions have to be hooked up into the initialisation and shut down procedures.
 
 .. code-block::
-   :emphasize-lines: 1,2,7-10,12-
+   :emphasize-lines: 1,3,8-11,13-
 
     from qtpy.QtCore import QSettings, QByteArray
+    ...
     from pymodaq_utils.config import Config, ConfigError, get_set_config_dir
     ...
     def __init__(self, parent: gutils.DockArea, dashboard):
@@ -247,9 +249,9 @@ The first of the newly introduced lines in the init method returns a path to a s
 The parameters controlling the spectrometer are all accessible in the experiment configuration and could be changed via the detector's widget in the dashboard, or using the configurator (try this out yourself as an exercise). However, to ease operation, a set of most important parameters shall be displayed in the main window of the spectrometer application. They are declared in the preamble of the extension class in the same fashion as device parameters in the preamble of a plugin class. All parameters defined in :code:`params[]` are made available in :code:`self.settings_tree` by PyMoDAQ's start-up machinery.
 
 .. code-block::
-   :emphasize-lines: 3-14,19-21,25-
+   :emphasize-lines: 3-14,17-19,23-
 
-    class Absorption(CustomExt):
+    class AbsorptionExtension(CustomExt):
         ...
         params = [
             {'name': 'device_params', 'title': 'Device parameters', 'type': 'group',
@@ -265,8 +267,6 @@ The parameters controlling the spectrometer are all accessible in the experiment
            ]
         ...
         def setup_docks(self):
-            self.create_dashboard_toolbar()
-
             self.docks['settings'] = Dock('Application Settings')
             self.dockarea.addDock(self.docks['settings'])
             self.docks['settings'].addWidget(self.settings_tree)
@@ -276,13 +276,14 @@ The parameters controlling the spectrometer are all accessible in the experiment
             self.docks['spectrum'] = \
                 self.dockarea.addDock(spectrum_dock, "right",
                                       self.docks['settings'])
+            ...
 
 The newly introduced dock holds a parameter tree containing what has been defined in :code:`params`. Note the change in placing the data viewer at the right of the parameter dock. To make the detector aware of parameter changes, another predefined method has to be populated
 
 .. code-block::
    :emphasize-lines: 4-
 
-    class Absorption(CustomExt):
+    class AbsorptionExtension(CustomExt):
     ...
         def value_changed(self, param):
             if param.name() == "integration_time":
@@ -307,9 +308,9 @@ The parameter ``Average`` has not yet any effect. Let's change that.
 
     import numpy as np
     ...
-    from pymodaq.utils.data import DataToExport, DataFromPlugins, Axis
+    from pymodaq.utils.data import DataFromPlugins, DataToExport, Axis
     ...
-    class Absorption(CustomExt):
+    class AbsorptionExtension(CustomExt):
         ...
         def start_acquiring(self):
             self.n_samples = 0
@@ -356,9 +357,9 @@ Zooming in on the error curve permits to see how the error scales now with :math
 Once again, changes on the parameters do not survive quitting. One could write them to and recover them from a configuration file one by one. However, expecting the number of parameters to increase with time, it will be advantageous to prepare for that now. Since the device parameters are a dict inside a dict inside an array, it is easier to declare them in a separate list 
 
 .. code-block::
-   :emphasize-lines: 3-15,21-23,27-
+   :emphasize-lines: 3-15,21-24,28-
 
-    class Absorption(CustomExt):
+    class AbsorptionExtension(CustomExt):
 
         device_params = [
             {'name': 'integration_time', 'title': 'Integration Time [ms]',

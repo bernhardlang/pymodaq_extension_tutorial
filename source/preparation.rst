@@ -95,7 +95,7 @@ This tells the Python installer to incorporate the module under development into
 
   $ python -m pip install pip --upgrade
 
-Note that the template plugins will still not appear in the dashboard's device list because without modification the code therein will throw exceptions, preventing the (anyway still useless) plugins to be loaded.
+Note that the template plugins will still not appear in the dashboard's device list because without modification the code therein will throw exceptions, preventing the (anyway still useless) plugins to be loaded. The corresponding error messages show up in PyMoDAQ's log file. If that's not what you want then you may delete the unused template files (0D and 2D viewer and models). But keep the directories and the :file:`__init__.py` files therein because later on you may want to add further plugins. The deleted code can easily be recovered from the repository on github.
 
 A few words on the virtual environments may be worth mentioning here.
 
