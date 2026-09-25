@@ -17,9 +17,9 @@ The code shown in this tutorial has been developed and tested under Linux. The c
    dashboard.rst
    extension.rst
    absorption.rst
-   config-dialog.rst
    custom-app.rst
    state-manager.rst
+   config-dialog.rst
    fluo.rst
    data-mixer.rst
    photochem.rst

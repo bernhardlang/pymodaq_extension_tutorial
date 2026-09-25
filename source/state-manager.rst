@@ -1,5 +1,5 @@
-Using the state manager
-=======================
+Interlude II: Using the state manager
+=====================================
 
 This section covers the use of the state manager. It can be used to trigger actions on actuators and to change parameter values on plugins. We'll use it here to close and open the shutter for background acquisition. Since we want to keep the already working extension in place, let's create a new file :file:`state_absorption_extension.py` and fill it with the following
 
@@ -13,7 +13,7 @@ This section covers the use of the state manager. It can be used to trigger acti
     from pymodaq_plugins_tutorial_extension.extensions.absorption_extension \
         import Absorption
     from pymodaq_plugins_tutorial_extension.extensions.absorption_extension \
-        import Absorption
+        import AbsorptionExtension
 
     logger = set_logger(get_module_name(__file__))
 
@@ -21,9 +21,9 @@ This section covers the use of the state manager. It can be used to trigger acti
     plugin_config = PluginConfig()
 
     EXTENSION_NAME = 'StateManagerAbsorption'
-    CLASS_NAME = 'StateManagerAbsorption'
+    CLASS_NAME = 'StateManagerAbsorptionExtension'
 
-    class StateManagerAbsorption(Absorption):
+    class StateManagerAbsorptionExtension(AbsorptionExtension):
 
         def start_background(self):
             self.data_valid = False
@@ -57,6 +57,6 @@ The code of :code:`take_background` is slightly longer than the version it overl
 
 Launch the dashboard, load the :file:`absorption` experiment and the :file:`StateManagerAbsorption` extension. The state manager permits now to create sets of configuration operations. Click on the New item on top of the right panel and enter :file:`background` as name. Upon a right click into the configuration area below select :file:`Add Special Configuration -> Actuator value`. Choose the dark shutter here and set the actuator value to zero. Activate the configuration once to get it saved (that's a bug-like trap!). Repeat the same for a state :file:`spectrum` which should set the dark shutter value to one. Note that the names given to the configuration have to literally match the corresponding names in the code above. 
 
-In terms of functionality, the program has not changed. Using the state manager instead of steering the actuators directly just changes the way things are 'wired' together. However, used together with a state machine, this can be turned into a quite powerful tool to work on complex sequences.
+In terms of functionality, the program has not changed. Using the state manager instead of steering the actuators directly just changes the way things are 'wired' together. However, used together with a sequencer, this can be turned into a quite powerful tool to work on complex sequences.
 
 :code:`tag state-manager`

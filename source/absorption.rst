@@ -471,3 +471,10 @@ And to make this work we finally have to add some code handling actions and icon
 
                                      
 :code:`branch csv-export`
+
+Resumé and outlook
+..................
+
+At this point we have an extension which is controlling an absorption measurement, based on simulation plugins which--thanks to PyMoDAQ's modular design--can easily be exchanged with plugins controlling real devices. However, the link between the functionality of the dashboard and the extension is still hard coded. At the present state, the extension expects the spectro-photometer and the shutters to be defined in the experiment configuration with the literal names coded into the extension. The same holds for the retrieval of the spectro-photometer's data in :code:`DataToExport` object received from the plugin. 
+
+Addressing this issue asks for implementing some sort of configuration dialog which exposes a list of suitable acquisition devices and actuators and permits to probe the content of the data exported by the plugin. This will be handled in a further chapter, after two interludes on a custom application--which uses the hardcoded approach even without a dashboard being present--and how the flipping back and forth between different states of measurement--background, reference and absorption--can be acomplished using the state manager, thereby reducing the amount of code to be written.
