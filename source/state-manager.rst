@@ -1,5 +1,5 @@
-Interlude II: Using the state manager
-=====================================
+Interlude I: Using the state manager
+====================================
 
 This section covers the use of the state manager. It can be used to trigger actions on actuators and to change parameter values on plugins. We'll use it here to close and open the shutter for background acquisition. Since we want to keep the already working extension in place, let's create a new file :file:`state_absorption_extension.py` and fill it with the following
 

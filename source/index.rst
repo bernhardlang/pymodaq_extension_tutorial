@@ -19,14 +19,8 @@ The author gratefully acknowledges the help by Sébastien Weber to set up the co
    dashboard.rst
    extension.rst
    absorption.rst
-   custom-app.rst
    state-manager.rst
-   config-dialog.rst
-   fluo.rst
-   data-mixer.rst
-   photochem.rst
-   sequencer.rst
-   step-scan.rst
+   future.rst
 
 
 Indices and tables
