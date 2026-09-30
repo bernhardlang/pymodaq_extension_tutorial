@@ -50,7 +50,7 @@ Technically speaking, the Python class :code:`CustomExtension` inherits from the
 How to use this tutorial
 ........................
 
-Back-to-back with this tutorial there is a `github repository <test>`_ which contains the code developed here step by step. Branches in the repository correspond to steps in the tutorial where code can be run. The next chapter will explain how to check out that code to compare it with the code you have written and to spot mistakes and their corrections.
+Back-to-back with this tutorial there is a `github repository <https://github.com/bernhardlang/pymodaq_plugins_tutorial_extension>`_ which contains the code developed here step by step. Branches in the repository correspond to steps in the tutorial where code can be run. The next chapter will explain how to check out that code to compare it with the code you have written and to spot mistakes and their corrections.
 
 When working through the following chapters, you will encounter here and there some Python features which are not covered in this tutorial, like the concept of classes and instances and their corresponding variables, decorators, lambdas etc, just to name some. These are Python peculiarities but not specific to PyMoDAQ. Should you get stuck on one those, ask uncle stackoverflow, aunty google or colleague chat bot. That will also help you getting familiar with these tools and developing your own productive style of coding. There are plenty of excellent tutorials on such matter out there. And keep in mind, also on the `PyMoDAQ website <https://pymodaq.cnrs.fr>`_ you'll find quite some useful guides and tutorials how to juggle with PyMoDAQ and its built-in functionalities.
 

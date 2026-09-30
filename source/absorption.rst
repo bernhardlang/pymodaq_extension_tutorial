@@ -52,11 +52,10 @@ The GUI has also to be updated. It is always a good idea to display all data ent
 .. image:: extension-mockup.png
    :align: center
 
-
 .. code-block::
    :emphasize-lines: 3,5-
 
-    def setup_docks(self):
+    def setup_docks_and_widgets(self):
         ...
         self.spectrum_label = DockLabel("Current Data")
         ...
@@ -97,7 +96,7 @@ Two new actions are needed
             self.add_action('reference', 'Take Reference', 'lightbulb',
                             "Take Reference", checkable=False,
                             toolbar=self.toolbar)
-        self._actions["stop"].setEnabled(False)
+            self._actions["stop"].setEnabled(False)
 
 After deleting again the GUI settings file, the extension should now look like
 
@@ -105,7 +104,7 @@ After deleting again the GUI settings file, the extension should now look like
 
 If you need icons which are not present in the icon library (:file:`pymodaq_gui/resources/icon_library`), you'll have to select suitable ones at https://fonts.google.com/icons. To be able to add them to PyMoDAQ's icon library you have to fork the PyMoDAQ repository, add the icons' names to the list in :file:`pymodaq_gui/resources/icons.toml` and follow the instructions therein and in :file:`pymodaq_gui/resources/check_icons_dev.py`. After a pull request, the additional icons will be available to all PyMoDAQ users. During development it is sufficient to install the pymodaq_gui package in editable mode within your working environment and apply these changes there.
 
-:code:`branch updated-gui`
+:code:`-> branch updated-gui`
 
 The newly defined actions do not yet trigger any real operations. However, we should prepare some book keeping to prevent exceptions being raised due to missing properties. In the 'Raw' mode, neither background nor reference data are needed. Both new actions should therefore be disabled in that mode. On the other hand, when selecting 'Background Subtracted', a measurement is not possible until the background has been recorded. Likewise, an absorption measurement is possible only once both background and reference have been determined. The following routine takes care of the corresponding activation and deactivation operations.
 
@@ -135,7 +134,7 @@ The newly defined actions do not yet trigger any real operations. However, we sh
 To make this work, we need to declare the flags at initialisation and to call this method whenever the measurement mode or the state of the flags has changed. Some other parameter changes may equally call for an update of the actions. E.g. the background signal depends on the integration time. When the latter is changed we have to invalidate the former. We also have to distinguish between normal acquisition and acquisition of background and reference data. Furthermore, while the shutter is moving or we wait for the user to exchange samples, any incoming data should be discarded.
 
 .. code-block::
-   :emphasize-lines: 6-9,16-20,25,26,31-
+   :emphasize-lines: 6-9,16-20,25,26,31-32
 
     class Absorption(CustomExt):
     ...
@@ -159,8 +158,8 @@ To make this work, we need to declare the flags at initialisation and to call th
             self.adjust_actions()
 
         def start_acquiring(self):
-            self.n_samples = 0
-            self.n_average = self.settings.child('device_params')['averaging']
+            ...
+            self._actions["stop"].setEnabled(True)
             self.acquisition_mode = 'acquire'
             self.adjust_actions()
             self.detector.grab()
@@ -242,7 +241,7 @@ Spectral regions where the level of the white light lamp is low may induce probl
             self.background_viewer.show_data(dfp)
             self.dark_shutter.move_abs(1200)
 
-Recording the reference in the simulated environment needs a little tweak. With the real machine, the user exchanges the sample with a pure solvent cell. In the present simulation this has to be done by software. To this end we set the controller's property :code:`with_sample`. In case of a real-worl device, that added but unused property won't do any harm.
+Recording the reference in the simulated environment needs a little tweak. With the real machine, the user exchanges the sample with a pure solvent cell. In the present simulation this has to be done by software. To this end we set the controller's property :code:`with_sample`. In case of a real-world device, that added but unused property won't do any harm.
 
 .. code-block::
 
@@ -277,7 +276,9 @@ Recording the reference in the simulated environment needs a little tweak. With 
                                       labels=labels, axes=[self.x_axis])
                 self.raw_data_viewer.show_data(dfp)
 
-To record the background, the shutter has to be closed. The take-background action has in fact to trigger that operation. Upon arrival, the corresponding :code:`DAQ_move` instance emits the signal :code:`move_done` which
+To record the background, the shutter has to be closed. The take-background action has in fact to trigger that operation. Upon arrival, the corresponding :code:`DAQ_move` instance emits the signal :code:`move_done` which we connect to the extension's :code:`shutter_ready` method so that grabbing can start once the shutter has reache its target position.
+
+Note that the method :code:`do_things_after_experiment_set` is called only after the dashboard has loaded an experiment configuration. Since we're not asking the dashboard for doing so in the :code:`main` routine, this method gets never called when launching the extensiondirectly as a script. The implementation of the dashboard contains code which should directly load a dashboard with an experiment and an extension. However, as of writing this, this code doesn't yet work properly.
 
 .. code-block::
    :emphasize-lines: 5-8,10-16,18-
@@ -342,7 +343,7 @@ To make things operative, the actions have be connected to the corresponding met
             self.connect_action('background', self.start_background)
             self.connect_action('reference', self.start_reference)
 
-:code:`branch full-absorption`
+:code:`-> branch full-absorption`
 
 To finish up this section we add a simple method to export data in CSV format. Handling H5 storage is covered in a later chapter.
 
@@ -469,8 +470,12 @@ And to make this work we finally have to add some code handling actions and icon
         ...
         self.connect_action('save', self.save_current_data)
 
-                                     
-:code:`branch csv-export`
+Running the extension in absorption mode should lead to a result like shown below.
+
+.. image:: application-with-absorption.png
+   :align: center
+
+:code:`-> branch csv-export`
 
 Resumé and outlook
 ..................

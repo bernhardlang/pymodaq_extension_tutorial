@@ -50,7 +50,7 @@ My preferred code editor (being a keyboard player) makes backup copies of change
 
   *~
 
-at the bottom of :file:`.gitignore`. Yo may add similar matter to prevent git considering temporal files which are not supposed to enter into the repository.
+at the bottom of :file:`.gitignore`. You may add similar matter to prevent git considering temporal files which are not supposed to enter into the repository.
 
 Let's inspect the root folder::
 
@@ -75,7 +75,9 @@ As a last step before diving into coding we have to set up a virtual environment
   $ source /path/to/your/environments/tut/bin/activate
   $ pip install pymodaq pyqt6
 
-As path you should choose a sensible name for your project. The sub folders created in the environment folder contain links to the Python interpreter to be used and will receive all packages installed by pip once the environment is activated. Some prefer to have a separate environment for each package / plugin to be developed. Different environments are needed at least when working with different versions of some packages in parallel. But don't worry, new environments can always be set up later in case that incompatibilities come up. 
+As path you should choose a sensible name for your project. Where you create this environment folder depends on your personal preferences or on the preferences of the people you are cooperating with. Some prefer to have the environment folder in the folder of the corresponding module. However, a module may be used (and installed in editable mode) in various different environments on your computer. Two "best practices" could probably be named: i) have all environments under a comon root folder (that'sthe approach shown above), ii) place the folder of the environment which you use for developing your module inside the module's folder and keep other environments using that module (and potentially others) elsewhere.
+
+The sub folders created in the environment folder contain links to the Python interpreter to be used and will receive all packages installed by pip once the environment is activated. Some prefer to have a separate environment for each package / plugin to be developed. Different environments are needed at least when working with different versions of some packages in parallel. But don't worry, new environments can always be set up later in case that incompatibilities come up. 
 
 The activation will add the environment's bin directory to the head of the current search path so that the binaries therein will be found before any others with the same name. If you wish to use a specific Python version, say 3.12, call::
 

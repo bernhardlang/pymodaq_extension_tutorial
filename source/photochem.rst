@@ -1,6 +1,10 @@
 Work in Progress Watching a photochemical reaction
 ==================================================
 
+Outline
+-------
+
+
 Description and simulation of the experiment
 --------------------------------------------
 

@@ -67,7 +67,11 @@ The result should look like
 
 .. image:: simu-spect-abs.png
 
-:code:`branch spectra`
+Of course, you'll need to install :file:`matplotlib` to make that working. At this point we have the first snippet of code running. You may checkout the branch
+
+:code:`-> branch spectra`
+
+from the `github repository <https://github.com/bernhardlang/pymodaq_plugins_tutorial_extension>`_ to compare with your code, in case something doesn't work as expected. You'll find such a branch mark at each milestone of the tutorial, where code should be ready to run.
 
 Next comes the method which is used to generate realistic spectroscopic data.
 Without light exposure detectors show some dark signal which is mostly coming from thermal noise. Its amplitude is typically proportional to the integration time. It comes in units of LSB (least significant bit), i.e. in increments of the ADC. In case the signal gets too strong, the ADC signal saturates at the highest possible value (e.g. 65535 for a 16 bit ADC). The simulated signal is therefore cut to that level. Together with the data we send a time stamp.
@@ -98,9 +102,9 @@ Without light exposure detectors show some dark signal which is mostly coming fr
 
 .. image:: background.png
 
-:code:`branch background`
+:code:`-> branch background`
 
-Once the probe light passes through the sample cell, but filled only with solvent, the light induces a photo current in the detector which is accumulated as charges in a capacitor during the integration time. The natural unit of the detected quantity would therefore be the number of collected photo electrons. However, the read-out is performed by discharging the capacitor through a resistance and measuring the tension across this resistance by means of an ADC. Therefore, the property :code:`light_level` is given in units of ADC LSB--because that is what the user sees on the plot showing the camera read-out--with the conversion factor :code:`pe_per_lsb` (photo electrons per LSB).
+Once the probe light passes through the sample cell, but filled only with solvent, the light induces a photo current in the detector which is accumulated as charges in a capacitor during the integration time. The natural unit of the detected quantity would therefore be the number of collected photo electrons. However, the read-out is performed by discharging the capacitor through a resistance and measuring the voltage across this resistance by means of an ADC. Therefore, the property :code:`light_level` is given in units of ADC LSB--because that is what the user sees on the plot showing the camera read-out--with the conversion factor :code:`pe_per_lsb` (photo electrons per LSB).
 
 The detected signal exhibits a fluctuation due to counting statistics. Other types of fluctuations like a variation of the overall amplitude due to correlated thermal noise could be implemented here as well. For the purpose of demonstration we'll leave it at the level of counting statistics. Keep in mind that these counting statistics are based on the number of photo electrons collected per pixel. Before determining the spread of the corresponding Poisson distribution, the signal amplitude has to be converted into that number. And once the random numbers have been generated, they have to be converted back to ADC LSB.
 
@@ -132,7 +136,7 @@ The detected signal exhibits a fluctuation due to counting statistics. Other typ
 
 .. image:: reference.png
 
-:code:`branch signal-and-background`
+:code:`-> branch signal-and-background`
 
 After having inserted an absorbing sample, the intensity of the light transmitted through the sample is reduced according to 
 
@@ -184,4 +188,4 @@ And finally, calculating the absorption from these data, the result should look 
 
 .. _controller-ready:
 
-:code:`branch controller-ready`
+:code:`-> branch controller-ready`

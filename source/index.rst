@@ -5,6 +5,8 @@ This tutorial guides through writing a PyMoDAQ extension starting from the templ
 
 The code shown in this tutorial has been developed and tested under Linux. The code itself should be portable since everything is done in Python without relying on external libraries. Nonetheless, the surrounding tools may vary on different operating systems. Setting up the module structure and similar is done on the Linux command line (or git-shell). Experienced Windows users and PyCharm experts are warmly welcome to add corresponding instructions to this tutorial to cover their beloved environments.
 
+The author gratefully acknowledges the help by Sébastien Weber to set up the code demonstrated in this tutorial, as well as by Johannes Wega and Joseph Kölbel (Physical Chemistry Departement of the University of Geneva) for extensive testing.
+
 .. toctree::
    :maxdepth: 1
    :caption: Contents:

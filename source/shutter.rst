@@ -106,6 +106,8 @@ Rename the class and pay attention to the naming convention. The preamble of the
 	def ini_attributes(self):
 	    self.controller: MockSpectrometer = None
 
+Note that the actual values for the positions of the shutter do not play a role here, as long as the shutter is only simulated. There have just to be two values. In the real experiment these would have to be determined from the actual shutter blade positions.
+
 The initialisation procedure is similar to the one of a detector plugin.
 
 .. code-block::
@@ -183,4 +185,6 @@ an actuator window should open which looks like follows (potentially after a man
 
 .. image:: actuator.png
 
-:code:`branch shutter-plugin`
+If you get an error complaining about a non existing type or class called :code:`UiType`, simply comment out all lines referening that class. This should be one import line and one or two lines in the preable of the class :code:`DAQ_Move_MockShutter` class.
+
+:code:`-> branch shutter-plugin`

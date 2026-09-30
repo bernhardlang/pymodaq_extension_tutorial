@@ -177,4 +177,4 @@ and should display simulated data when pressing the grab button (the left-right 
 * If the plugin doesn't event get to execute that method or crashes when clicking the connect icon, check the log file for error messages (:file:`~/.pymodaq/log/pymodaq.log`).
   
 
-:code:`branch spectro-plugin`
+:code:`-> branch spectro-plugin`

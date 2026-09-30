@@ -58,7 +58,7 @@ The main GUI area of the application is accessible through the instance variable
     ...
     class AbsorptionExtension(CustomExt):
     ...
-        def setup_docks(self):
+        def setup_docks_and_widgets(self):
             self.create_dashboard_toolbar()
 
             self.spectrum_label = gutils.dock.DockLabel("Raw Data")
@@ -107,7 +107,7 @@ However, it hasn't got any functionality yet. In case that our newly created ext
 
 If Python throws any error at you, that message should tell where the problem is. In case of success, the bare extension window should pop up. Another source of information can be the log file which you may scan for error messages. Did you catch the error in the :code:`main()` function at the end of the extension file?
 
-:code:`branch bare-extension`
+:code:`-> branch bare-extension`
 
 To get things working in a preliminary and primitive fashion we add a method that accepts data from the spectrograph's 1D viewer plugin. It simply extracts the raw spectrometer data from the received :code:`DataToExport` object and displays that in the viewer.
 
@@ -201,7 +201,7 @@ Stopping acquisition before it has been started doesn't make much sense. PyMoDAQ
 
 Note that this introduces a bug. The dashboard is of course not aware of the functionality created in the extension. When starting or stopping the acquisition from the dashboard, the tool bar buttons in the extension are not updated. Again, this will be addressed later on.
 
-:code:`branch extension-with-data`
+:code:`-> branch extension-with-data`
 
 You may have noticed while playing around with the extension that it opens up with a size which is not very suitable. And changes to the window are not preserved over quitting the dashboard. Let's make changes so that the GUI geometry stays permanently. Two functions, inverse of each other, take care of writing the current parameter values and geometry settings to a configuration file and reading them back. This is done here in a preliminary fashion using Qt's settings mechanism. **@PyMoDAQxperts:** please replace this with more PyMoDAQonian style ...
 
@@ -244,7 +244,7 @@ To make this work, the two functions have to be hooked up into the initialisatio
 
 The first of the newly introduced lines in the init method returns a path to a sub folder :file:`gui-state` located in the user's PyMoDAQ configuration folder. If that sub folder doesn't exist yet it is created. GUI settings can go in there now. Have a try, resizing the extension window should now persist over shutting down and restarting the extension and the dashboard. Note that this geometry sub-section may not be necessary in future versions of PyMoDAQ.
 
-:code:`branch geometry`
+:code:`-> branch geometry`
 
 The parameters controlling the spectrometer are all accessible in the experiment configuration and could be changed via the detector's widget in the dashboard, or using the configurator (try this out yourself as an exercise). However, to ease operation, a set of most important parameters shall be displayed in the main window of the spectrometer application. They are declared in the preamble of the extension class in the same fashion as device parameters in the preamble of a plugin class. All parameters defined in :code:`params[]` are made available in :code:`self.settings_tree` by PyMoDAQ's start-up machinery.
 
@@ -352,7 +352,7 @@ The parameter ``Average`` has not yet any effect. Let's change that.
 
 Zooming in on the error curve permits to see how the error scales now with :math:`\sqrt{n_\mathrm{average}}`.
 
-:code:`branch averaging`
+:code:`-> branch averaging`
 
 Once again, changes on the parameters do not survive quitting. One could write them to and recover them from a configuration file one by one. However, expecting the number of parameters to increase with time, it will be advantageous to prepare for that now. Since the device parameters are a dict inside a dict inside an array, it is easier to declare them in a separate list 
 
@@ -380,7 +380,7 @@ Once again, changes on the parameters do not survive quitting. One could write t
         def write_settings(self, qt_settings):
             ...
             for param in self.device_params:
-                qt_settings.setValue(name,
+                qt_settings.setValue(param['name'],
                                      self.settings.child('device_params') \
                                      [param['name']])
 
@@ -395,4 +395,4 @@ The second argument of :code:`QSettings.value` is a default value which prevents
 
 Until now, the extension still does nothing more than a bare plugin can do. Features beyond will be introduced in the next chapter.
 
-:code:`branch params-to-settings`
+:code:`-> branch params-to-settings`
