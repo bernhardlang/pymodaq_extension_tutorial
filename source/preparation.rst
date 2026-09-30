@@ -130,8 +130,9 @@ tells you what will be committed when issuing::
 
 If you want to compare your code with the code provided in the github repository which accompanies this tutorial, make a clone of that repository and check out the branch corresponding to your current stage::
 
-  $ git clone https://github.com/bernhardlang/pymodaq_extension_tutorial.git
-  $ cd pymodaq_extension_tutorial
+  $ cd /path/to/comparison/code
+  $ git clone https://github.com/bernhardlang/pymodaq_extension_tutorial.git tutorial_github
+  $ cd tutorial_github
   $ git checkout preparation
 
-A hint :code:`branch preparation` on the branch to check out will be placed at every mile stone in this tutorial.
+A hint :code:`-> branch preparation` on the branch to check out will be placed at every mile stone in this tutorial.

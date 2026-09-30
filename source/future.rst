@@ -7,14 +7,8 @@ Interlude II: CustomApp
 Configuring Devices and Data
 ----------------------------
 
-A Fluorescence Measurement
---------------------------
-
-Intensity Correction using a Data Mixer
----------------------------------------
-
-Watching a Photochemical Reaction
----------------------------------
+Interlude III: C and C++ Interfacing--accessing shared libraries
+----------------------------------------------------------------
 
 Using the Sequencer
 -------------------
@@ -22,8 +16,14 @@ Using the Sequencer
 Application Examples
 --------------------
 
-Performing a Step-Scan Experiment
+A Fluorescence Measurement
+..........................
+
+Using the Data Mixer for Intensity Corrections
+..............................................
+
+Watching a Photochemical Reaction
 .................................
 
-C and C++ Interfacing: Moving the simulated spectro-photometer into a C module
-------------------------------------------------------------------------------
+Performing a Step-Scan Experiment
+.................................
