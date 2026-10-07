@@ -1,17 +1,28 @@
 Planned Future Chapters
 =======================
 
+
 Interlude II: CustomApp
 -----------------------
+
 
 Configuring Devices and Data
 ----------------------------
 
-Interlude III: C and C++ Interfacing--accessing shared libraries
-----------------------------------------------------------------
 
 Using the Sequencer
 -------------------
+
+
+Hints and Tricks
+----------------
+
+Identifying Serial Ports
+........................
+
+C and C++ Interfacing--accessing shared libraries
+.................................................
+
 
 Application Examples
 --------------------
@@ -27,3 +38,5 @@ Watching a Photochemical Reaction
 
 Performing a Step-Scan Experiment
 .................................
+
+
